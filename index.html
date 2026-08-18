@@ -1,8 +1,4 @@
-from IPython.display import HTML, display
-
-display(HTML(r'''
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -10,9 +6,14 @@ display(HTML(r'''
 <meta charset="UTF-8">
 
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+      content="width=device-width,
+               initial-scale=1.0,
+               maximum-scale=1.0,
+               user-scalable=no">
 
-<title>🌸 AirBloom - Two Hands</title>
+<meta name="theme-color" content="#080b16">
+
+<title>🌸 AirBloom</title>
 
 
 <!-- =====================================================
@@ -20,8 +21,6 @@ display(HTML(r'''
 ===================================================== -->
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
@@ -31,46 +30,60 @@ display(HTML(r'''
 <style>
 
 /* =====================================================
-   GLOBAL
+   RESET
 ===================================================== */
 
 * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+html,
+body {
+
+    margin: 0;
+
+    padding: 0;
+
+    width: 100%;
+
+    min-height: 100%;
+
 }
 
 
 body {
 
-    margin: 0;
-
     min-height: 100vh;
-
-    padding: 20px;
 
     background:
         radial-gradient(
-            circle at top left,
-            #32135e,
-            transparent 35%
+            circle at 10% 10%,
+            #35136b 0%,
+            transparent 32%
         ),
 
         radial-gradient(
-            circle at bottom right,
-            #063f5c,
-            transparent 35%
+            circle at 90% 90%,
+            #06435e 0%,
+            transparent 32%
         ),
 
         #080b16;
 
     color: white;
 
-    font-family: Arial, sans-serif;
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
+    overflow-x: hidden;
 
 }
 
@@ -83,7 +96,11 @@ body {
 
     width: 100%;
 
-    max-width: 1200px;
+    max-width: 1250px;
+
+    margin: auto;
+
+    padding: 25px 20px 40px;
 
     text-align: center;
 
@@ -96,9 +113,15 @@ body {
 
 h1 {
 
-    margin: 5px 0;
+    margin: 0;
 
-    font-size: 44px;
+    font-size: clamp(
+        32px,
+        5vw,
+        52px
+    );
+
+    font-weight: 800;
 
     background:
         linear-gradient(
@@ -110,6 +133,8 @@ h1 {
 
     -webkit-background-clip: text;
 
+    background-clip: text;
+
     -webkit-text-fill-color: transparent;
 
 }
@@ -117,15 +142,24 @@ h1 {
 
 .subtitle {
 
-    color: #c9c9d8;
+    margin-top: 8px;
 
-    margin-bottom: 20px;
+    margin-bottom: 22px;
+
+    color: #bfc2d6;
+
+    font-size:
+        clamp(
+            14px,
+            2vw,
+            17px
+        );
 
 }
 
 
 /* =====================================================
-   CAMERA
+   CAMERA STAGE
 ===================================================== */
 
 .stage {
@@ -134,45 +168,64 @@ h1 {
 
     width: 100%;
 
-    max-width: 1050px;
+    max-width: 1100px;
 
     margin: auto;
+
+    background: #000;
 
     border-radius: 25px;
 
     overflow: hidden;
 
-    background: #000;
-
     box-shadow:
-        0 0 45px
-        rgba(160,100,255,.30);
+        0 0 50px
+        rgba(
+            150,
+            90,
+            255,
+            .28
+        );
 
 }
 
 
-/* CAMERA */
+/* =====================================================
+   VIDEO
+===================================================== */
 
 #video {
 
+    display: block;
+
     width: 100%;
 
-    display: block;
+    height: auto;
+
+    aspect-ratio: 16 / 9;
+
+    object-fit: cover;
+
+    background: #000;
+
+    /*
+       Mirror camera
+    */
 
     transform: scaleX(-1);
 
 }
 
 
-/* DRAWING */
+/* =====================================================
+   DRAW CANVAS
+===================================================== */
 
 #drawCanvas {
 
     position: absolute;
 
-    left: 0;
-
-    top: 0;
+    inset: 0;
 
     width: 100%;
 
@@ -183,15 +236,15 @@ h1 {
 }
 
 
-/* HAND SKELETON */
+/* =====================================================
+   HAND CANVAS
+===================================================== */
 
 #handCanvas {
 
     position: absolute;
 
-    left: 0;
-
-    top: 0;
+    inset: 0;
 
     width: 100%;
 
@@ -212,20 +265,123 @@ h1 {
 
     inset: 0;
 
+    z-index: 30;
+
     display: flex;
+
+    flex-direction: column;
 
     justify-content: center;
 
     align-items: center;
 
+    gap: 15px;
+
+    padding: 20px;
+
     background:
-        rgba(5,5,15,.88);
+        rgba(
+            5,
+            5,
+            15,
+            .92
+        );
 
-    z-index: 20;
-
-    font-size: 20px;
+    font-size: 18px;
 
     font-weight: bold;
+
+}
+
+
+/* =====================================================
+   LOADING SPINNER
+===================================================== */
+
+.spinner {
+
+    width: 45px;
+
+    height: 45px;
+
+    border-radius: 50%;
+
+    border: 4px solid
+        rgba(
+            255,
+            255,
+            255,
+            .15
+        );
+
+    border-top-color:
+        #ff8bd4;
+
+    animation:
+        spin 1s linear infinite;
+
+}
+
+
+@keyframes spin {
+
+    to {
+
+        transform:
+            rotate(360deg);
+
+    }
+
+}
+
+
+/* =====================================================
+   START CAMERA BUTTON
+===================================================== */
+
+#startButton {
+
+    margin-top: 15px;
+
+    padding:
+        14px
+        28px;
+
+    border: none;
+
+    border-radius: 30px;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c4dff,
+            #d946ef
+        );
+
+    box-shadow:
+        0 8px 25px
+        rgba(
+            180,
+            100,
+            255,
+            .25
+        );
+
+}
+
+
+#startButton:active {
+
+    transform:
+        scale(.97);
 
 }
 
@@ -236,27 +392,42 @@ h1 {
 
 .status {
 
-    margin: 18px auto;
+    display: inline-block;
 
-    width: fit-content;
+    margin:
+        18px
+        auto
+        12px;
 
-    padding: 12px 25px;
+    padding:
+        11px
+        24px;
 
     border-radius: 30px;
 
-    font-size: 18px;
-
-    font-weight: bold;
-
     background:
-        rgba(255,255,255,.08);
+        rgba(
+            255,
+            255,
+            255,
+            .07
+        );
 
     border:
         1px solid
-        rgba(255,255,255,.15);
+        rgba(
+            255,
+            255,
+            255,
+            .12
+        );
 
     backdrop-filter:
         blur(10px);
+
+    font-size: 17px;
+
+    font-weight: bold;
 
 }
 
@@ -292,31 +463,51 @@ h1 {
 
     justify-content: center;
 
-    gap: 15px;
+    align-items: stretch;
+
+    gap: 12px;
 
     flex-wrap: wrap;
 
-    margin-bottom: 15px;
+    margin:
+        0
+        auto
+        15px;
 
 }
 
 
 .handBox {
 
-    padding: 10px 18px;
+    min-width: 190px;
 
-    min-width: 180px;
+    padding:
+        11px
+        18px;
 
     border-radius: 15px;
 
     background:
-        rgba(255,255,255,.06);
+        rgba(
+            255,
+            255,
+            255,
+            .055
+        );
 
     border:
         1px solid
-        rgba(255,255,255,.10);
+        rgba(
+            255,
+            255,
+            255,
+            .09
+        );
 
-    color: #aaa;
+    color: #8f92a7;
+
+    transition:
+        .2s ease;
 
 }
 
@@ -326,13 +517,48 @@ h1 {
     color: white;
 
     background:
-        rgba(255,255,255,.10);
+        rgba(
+            255,
+            255,
+            255,
+            .10
+        );
+
+}
+
+
+.handBox.draw {
+
+    border-color:
+        rgba(
+            255,
+            105,
+            180,
+            .5
+        );
+
+    color: #ff8bd4;
+
+}
+
+
+.handBox.draw.right {
+
+    border-color:
+        rgba(
+            80,
+            210,
+            255,
+            .5
+        );
+
+    color: #67d9ff;
 
 }
 
 
 /* =====================================================
-   CONTROLS
+   BUTTONS
 ===================================================== */
 
 .controls {
@@ -341,22 +567,28 @@ h1 {
 
     justify-content: center;
 
+    align-items: center;
+
     gap: 12px;
 
     flex-wrap: wrap;
 
-    margin-top: 15px;
+    margin-top: 10px;
 
 }
 
 
-button {
+button.action {
 
     border: none;
 
-    padding: 13px 25px;
+    padding:
+        13px
+        24px;
 
     border-radius: 25px;
+
+    color: white;
 
     font-size: 15px;
 
@@ -364,21 +596,25 @@ button {
 
     cursor: pointer;
 
-    color: white;
-
-    transition: .2s;
+    transition:
+        transform .2s,
+        box-shadow .2s;
 
 }
 
 
-button:hover {
+button.action:hover {
 
     transform:
         translateY(-2px);
 
-    box-shadow:
-        0 8px 25px
-        rgba(180,100,255,.35);
+}
+
+
+button.action:active {
+
+    transform:
+        scale(.97);
 
 }
 
@@ -413,40 +649,71 @@ button.save {
 
 .instructions {
 
-    margin: 25px auto 0;
+    display: grid;
 
-    display: flex;
-
-    justify-content: center;
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(
+                150px,
+                1fr
+            )
+        );
 
     gap: 12px;
 
-    flex-wrap: wrap;
+    max-width: 800px;
+
+    margin:
+        25px
+        auto
+        0;
 
 }
 
 
 .gesture {
 
-    padding: 12px 18px;
+    padding:
+        15px
+        10px;
 
-    border-radius: 15px;
+    border-radius: 16px;
 
     background:
-        rgba(255,255,255,.07);
+        rgba(
+            255,
+            255,
+            255,
+            .055
+        );
 
     border:
         1px solid
-        rgba(255,255,255,.10);
-
-    min-width: 170px;
+        rgba(
+            255,
+            255,
+            255,
+            .09
+        );
 
 }
 
 
 .gesture span {
 
-    font-size: 27px;
+    display: block;
+
+    font-size: 29px;
+
+    margin-bottom: 5px;
+
+}
+
+
+.gesture b {
+
+    font-size: 15px;
 
 }
 
@@ -457,43 +724,215 @@ button.save {
 
     margin-top: 5px;
 
-    color: #aaa;
+    color: #9295aa;
 
-}
-
-
-#info {
-
-    margin-top: 12px;
-
-    color: #aaa;
-
-    font-size: 14px;
+    font-size: 12px;
 
 }
 
 
 /* =====================================================
-   RESPONSIVE
+   INFO
 ===================================================== */
 
-@media(max-width:700px) {
+#info {
 
-    body {
+    margin-top: 15px;
 
-        padding: 10px;
+    color: #8e91a7;
+
+    font-size: 13px;
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (
+    max-width: 700px
+) {
+
+    .app {
+
+        padding:
+            16px
+            10px
+            30px;
 
     }
+
 
     h1 {
 
-        font-size: 34px;
+        font-size: 35px;
 
     }
 
+
+    .subtitle {
+
+        margin-bottom: 15px;
+
+        font-size: 14px;
+
+    }
+
+
     .stage {
 
-        border-radius: 18px;
+        border-radius: 16px;
+
+        width: 100%;
+
+    }
+
+
+    #video {
+
+        /*
+           On mobile keep
+           16:9 camera view
+        */
+
+        aspect-ratio: 16 / 9;
+
+    }
+
+
+    .status {
+
+        margin:
+            13px
+            auto
+            10px;
+
+        padding:
+            9px
+            17px;
+
+        font-size: 14px;
+
+    }
+
+
+    .handsStatus {
+
+        gap: 8px;
+
+    }
+
+
+    .handBox {
+
+        min-width: 0;
+
+        flex: 1;
+
+        padding:
+            9px
+            7px;
+
+        font-size: 12px;
+
+    }
+
+
+    .controls {
+
+        gap: 8px;
+
+    }
+
+
+    button.action {
+
+        padding:
+            11px
+            17px;
+
+        font-size: 13px;
+
+    }
+
+
+    .instructions {
+
+        grid-template-columns:
+            1fr 1fr 1fr;
+
+        gap: 6px;
+
+        margin-top: 18px;
+
+    }
+
+
+    .gesture {
+
+        padding:
+            10px
+            5px;
+
+    }
+
+
+    .gesture span {
+
+        font-size: 23px;
+
+    }
+
+
+    .gesture b {
+
+        font-size: 12px;
+
+    }
+
+
+    .gesture small {
+
+        font-size: 10px;
+
+    }
+
+}
+
+
+/* =====================================================
+   VERY SMALL PHONE
+===================================================== */
+
+@media (
+    max-width: 380px
+) {
+
+    .instructions {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .gesture {
+
+        display: flex;
+
+        justify-content: center;
+
+        align-items: center;
+
+        gap: 8px;
+
+    }
+
+
+    .gesture span {
+
+        margin: 0;
 
     }
 
@@ -523,13 +962,13 @@ button.save {
 
     <div class="subtitle">
 
-        Draw beautiful flowers with both hands
+        Draw beautiful flowers with your fingers in the air
 
     </div>
 
 
     <!-- =================================================
-         CAMERA STAGE
+         CAMERA
     ================================================= -->
 
     <div class="stage">
@@ -537,7 +976,21 @@ button.save {
 
         <div id="loading">
 
-            🌸 Loading camera & hand tracking...
+            <div class="spinner"></div>
+
+            <div id="loadingText">
+
+                🌸 Camera ready
+
+            </div>
+
+            <button
+                id="startButton"
+                onclick="startAirBloom()">
+
+                📷 Start Camera
+
+            </button>
 
         </div>
 
@@ -545,6 +998,7 @@ button.save {
         <video
             id="video"
             autoplay
+            muted
             playsinline>
         </video>
 
@@ -576,7 +1030,7 @@ button.save {
 
 
     <!-- =================================================
-         LEFT / RIGHT STATUS
+         HAND STATUS
     ================================================= -->
 
     <div class="handsStatus">
@@ -613,7 +1067,7 @@ button.save {
 
 
         <button
-            class="clear"
+            class="action clear"
             onclick="clearDrawing()">
 
             🗑️ Clear
@@ -622,7 +1076,7 @@ button.save {
 
 
         <button
-            class="save"
+            class="action save"
             onclick="saveDrawing()">
 
             💾 Save Drawing
@@ -647,9 +1101,7 @@ button.save {
             <b>DRAW</b>
 
             <small>
-
-                Index finger only
-
+                Index only
             </small>
 
         </div>
@@ -662,9 +1114,7 @@ button.save {
             <b>PAUSE</b>
 
             <small>
-
                 Open hand
-
             </small>
 
         </div>
@@ -677,9 +1127,7 @@ button.save {
             <b>CLEAR</b>
 
             <small>
-
                 Closed fist
-
             </small>
 
         </div>
@@ -690,7 +1138,7 @@ button.save {
 
     <div id="info">
 
-        Waiting for hands...
+        Press "Start Camera"
 
     </div>
 
@@ -698,8 +1146,8 @@ button.save {
 </div>
 
 
-<script>
 
+<script>
 
 /* =====================================================
    ELEMENTS
@@ -747,6 +1195,18 @@ const loading =
     );
 
 
+const loadingText =
+    document.getElementById(
+        "loadingText"
+    );
+
+
+const startButton =
+    document.getElementById(
+        "startButton"
+    );
+
+
 const info =
     document.getElementById(
         "info"
@@ -769,45 +1229,57 @@ const rightStatus =
    VARIABLES
 ===================================================== */
 
+let cameraStarted = false;
 
-/*
-   Previous position for
-   LEFT hand
-*/
-
-let leftPreviousX =
-    null;
-
-let leftPreviousY =
-    null;
+let processing = false;
 
 
 /*
-   Previous position for
-   RIGHT hand
+   Previous positions
 */
 
-let rightPreviousX =
-    null;
+let leftPreviousX = null;
 
-let rightPreviousY =
-    null;
+let leftPreviousY = null;
+
+let rightPreviousX = null;
+
+let rightPreviousY = null;
 
 
 /*
    Clear cooldown
 */
 
-let lastClearTime =
-    0;
+let lastClearTime = 0;
 
 
 /*
    Flower counter
 */
 
-let flowerCounter =
-    0;
+let flowerCounter = 0;
+
+
+/*
+   Gesture stabilization
+*/
+
+const gestureHistory = {
+
+    Left: [],
+
+    Right: []
+
+};
+
+
+/*
+   Number of frames needed
+   before changing gesture
+*/
+
+const STABILITY_FRAMES = 3;
 
 
 /* =====================================================
@@ -817,30 +1289,22 @@ let flowerCounter =
 const colors = [
 
     "#ff69b4",
-
     "#ff9de2",
-
     "#c77dff",
-
     "#9b5de5",
-
     "#00bbf9",
-
     "#00f5d4",
-
     "#fee440",
-
     "#ff7b00"
 
 ];
 
 
 /* =====================================================
-   CANVAS SIZE
+   RESIZE CANVAS
 ===================================================== */
 
 function resizeCanvas() {
-
 
     const rect =
         video.getBoundingClientRect();
@@ -856,20 +1320,95 @@ function resizeCanvas() {
     }
 
 
+    /*
+       Save old drawing
+       when resizing.
+    */
+
+    const oldCanvas =
+        document.createElement(
+            "canvas"
+        );
+
+
+    oldCanvas.width =
+        drawCanvas.width;
+
+
+    oldCanvas.height =
+        drawCanvas.height;
+
+
+    if (
+        oldCanvas.width > 0 &&
+        oldCanvas.height > 0
+    ) {
+
+        oldCanvas
+            .getContext("2d")
+            .drawImage(
+                drawCanvas,
+                0,
+                0
+            );
+
+    }
+
+
+    const oldWidth =
+        drawCanvas.width;
+
+
+    const oldHeight =
+        drawCanvas.height;
+
+
+    /*
+       New size
+    */
+
     drawCanvas.width =
-        rect.width;
+        Math.round(rect.width);
 
 
     drawCanvas.height =
-        rect.height;
+        Math.round(rect.height);
 
 
     handCanvas.width =
-        rect.width;
+        Math.round(rect.width);
 
 
     handCanvas.height =
-        rect.height;
+        Math.round(rect.height);
+
+
+    /*
+       Restore drawing
+    */
+
+    if (
+        oldWidth > 0 &&
+        oldHeight > 0
+    ) {
+
+        drawCtx.drawImage(
+
+            oldCanvas,
+
+            0,
+            0,
+            oldWidth,
+            oldHeight,
+
+            0,
+            0,
+            drawCanvas.width,
+            drawCanvas.height
+
+        );
+
+    }
 
 }
 
@@ -880,6 +1419,442 @@ window.addEventListener(
 );
 
 
+window.addEventListener(
+    "orientationchange",
+    () => {
+
+        setTimeout(
+            resizeCanvas,
+            300
+        );
+
+    }
+);
+
+
+/* =====================================================
+   DISTANCE
+===================================================== */
+
+function distance(a, b) {
+
+    const dx =
+        a.x - b.x;
+
+    const dy =
+        a.y - b.y;
+
+    return Math.sqrt(
+        dx * dx +
+        dy * dy
+    );
+
+}
+
+
+/* =====================================================
+   ANGLE
+===================================================== */
+
+function angle(
+    a,
+    b,
+    c
+) {
+
+    const abx =
+        a.x - b.x;
+
+    const aby =
+        a.y - b.y;
+
+    const cbx =
+        c.x - b.x;
+
+    const cby =
+        c.y - b.y;
+
+
+    const dot =
+        abx * cbx +
+        aby * cby;
+
+
+    const mag1 =
+        Math.sqrt(
+            abx * abx +
+            aby * aby
+        );
+
+
+    const mag2 =
+        Math.sqrt(
+            cbx * cbx +
+            cby * cby
+        );
+
+
+    if (
+        mag1 === 0 ||
+        mag2 === 0
+    ) {
+
+        return 0;
+
+    }
+
+
+    let value =
+        dot /
+        (mag1 * mag2);
+
+
+    value =
+        Math.max(
+            -1,
+            Math.min(
+                1,
+                value
+            )
+        );
+
+
+    return Math.acos(
+        value
+    ) * 180 / Math.PI;
+
+}
+
+
+/* =====================================================
+   FINGER EXTENDED
+===================================================== */
+
+/*
+   Uses joint angles instead
+   of only Y coordinates.
+
+   This is more stable when
+   the hand rotates.
+*/
+
+function isFingerExtended(
+    landmarks,
+    mcp,
+    pip,
+    dip,
+    tip
+) {
+
+    const a =
+        angle(
+            landmarks[mcp],
+            landmarks[pip],
+            landmarks[dip]
+        );
+
+
+    const b =
+        angle(
+            landmarks[pip],
+            landmarks[dip],
+            landmarks[tip]
+        );
+
+
+    return (
+        a > 150 &&
+        b > 150
+    );
+
+}
+
+
+/* =====================================================
+   THUMB
+===================================================== */
+
+function isThumbOpen(
+    landmarks
+) {
+
+    const wrist =
+        landmarks[0];
+
+    const thumbTip =
+        landmarks[4];
+
+    const thumbIP =
+        landmarks[3];
+
+
+    return (
+        distance(
+            wrist,
+            thumbTip
+        ) >
+        distance(
+            wrist,
+            thumbIP
+        ) * 1.12
+    );
+
+}
+
+
+/* =====================================================
+   RAW GESTURE
+===================================================== */
+
+function rawGesture(
+    landmarks
+) {
+
+    const index =
+        isFingerExtended(
+            landmarks,
+            5,
+            6,
+            7,
+            8
+        );
+
+
+    const middle =
+        isFingerExtended(
+            landmarks,
+            9,
+            10,
+            11,
+            12
+        );
+
+
+    const ring =
+        isFingerExtended(
+            landmarks,
+            13,
+            14,
+            15,
+            16
+        );
+
+
+    const pinky =
+        isFingerExtended(
+            landmarks,
+            17,
+            18,
+            19,
+            20
+        );
+
+
+    /*
+       INDEX ONLY
+    */
+
+    if (
+
+        index &&
+
+        !middle &&
+
+        !ring &&
+
+        !pinky
+
+    ) {
+
+        return "draw";
+
+    }
+
+
+    /*
+       OPEN HAND
+    */
+
+    if (
+
+        index &&
+
+        middle &&
+
+        ring &&
+
+        pinky
+
+    ) {
+
+        return "pause";
+
+    }
+
+
+    /*
+       FIST
+    */
+
+    if (
+
+        !index &&
+
+        !middle &&
+
+        !ring &&
+
+        !pinky
+
+    ) {
+
+        return "clear";
+
+    }
+
+
+    /*
+       Ambiguous position
+       => pause
+    */
+
+    return "pause";
+
+}
+
+
+/* =====================================================
+   STABLE GESTURE
+===================================================== */
+
+function stableGesture(
+    landmarks,
+    side
+) {
+
+    const current =
+        rawGesture(
+            landmarks
+        );
+
+
+    const history =
+        gestureHistory[side];
+
+
+    history.push(
+        current
+    );
+
+
+    /*
+       Keep only last frames
+    */
+
+    while (
+        history.length >
+        STABILITY_FRAMES
+    ) {
+
+        history.shift();
+
+    }
+
+
+    /*
+       If not enough frames
+    */
+
+    if (
+        history.length <
+        STABILITY_FRAMES
+    ) {
+
+        /*
+           During startup use
+           current gesture.
+        */
+
+        return current;
+
+    }
+
+
+    /*
+       Count gestures
+    */
+
+    const counts = {
+
+        draw: 0,
+
+        pause: 0,
+
+        clear: 0
+
+    };
+
+
+    history.forEach(
+        g => {
+
+            counts[g]++;
+
+        }
+    );
+
+
+    /*
+       Find majority
+    */
+
+    let best =
+        "pause";
+
+
+    let bestCount =
+        0;
+
+
+    for (
+        const key
+        of Object.keys(counts)
+    ) {
+
+        if (
+            counts[key] >
+            bestCount
+        ) {
+
+            best =
+                key;
+
+            bestCount =
+                counts[key];
+
+        }
+
+    }
+
+
+    /*
+       Need majority
+    */
+
+    if (
+        bestCount >= 2
+    ) {
+
+        return best;
+
+    }
+
+
+    return "pause";
+
+}
+
+
 /* =====================================================
    DRAW FLOWER
 ===================================================== */
@@ -887,20 +1862,14 @@ window.addEventListener(
 function drawFlower(
     x,
     y,
-    handSide
+    side
 ) {
-
-
-    /*
-       Different color
-       depending on hand
-    */
 
     let color;
 
 
     if (
-        handSide === "Left"
+        side === "Left"
     ) {
 
         color =
@@ -917,12 +1886,12 @@ function drawFlower(
 
 
     /*
-       Occasionally use
-       another color
+       Occasionally random
+       colors
     */
 
     if (
-        flowerCounter % 5 === 0
+        flowerCounter % 6 === 0
     ) {
 
         color =
@@ -938,8 +1907,8 @@ function drawFlower(
 
 
     const size =
-        6 +
-        Math.random() * 7;
+        5 +
+        Math.random() * 6;
 
 
     drawCtx.save();
@@ -973,23 +1942,20 @@ function drawFlower(
         i++
     ) {
 
-
-        const angle =
+        const a =
             i *
-            (
-                Math.PI *
-                2 /
-                5
-            );
+            Math.PI *
+            2 /
+            5;
 
 
         const px =
-            Math.cos(angle) *
+            Math.cos(a) *
             size;
 
 
         const py =
-            Math.sin(angle) *
+            Math.sin(a) *
             size;
 
 
@@ -1062,26 +2028,19 @@ function drawFlower(
     */
 
     if (
-        flowerCounter % 3 === 0
+        flowerCounter % 4 === 0
     ) {
 
-
         drawCtx.fillStyle =
-            "white";
-
+            "#ffffff";
 
         drawCtx.font =
-            "15px Arial";
-
+            "14px Arial";
 
         drawCtx.fillText(
-
             "✦",
-
-            size + 5,
-
-            -size - 5
-
+            size + 4,
+            -size - 4
         );
 
     }
@@ -1097,14 +2056,11 @@ function drawFlower(
 ===================================================== */
 
 function drawConnection(
-
     x1,
     y1,
     x2,
     y2
-
 ) {
-
 
     drawCtx.save();
 
@@ -1125,11 +2081,15 @@ function drawConnection(
 
 
     drawCtx.strokeStyle =
-        "rgba(255,255,255,.16)";
+        "rgba(255,255,255,.18)";
 
 
     drawCtx.lineWidth =
         2;
+
+
+    drawCtx.lineCap =
+        "round";
 
 
     drawCtx.stroke();
@@ -1141,629 +2101,23 @@ function drawConnection(
 
 
 /* =====================================================
-   DISTANCE
-===================================================== */
-
-function distance(
-    a,
-    b
-) {
-
-
-    const dx =
-        a.x - b.x;
-
-
-    const dy =
-        a.y - b.y;
-
-
-    return Math.sqrt(
-        dx * dx +
-        dy * dy
-    );
-
-}
-
-
-/* =====================================================
-   FINGER EXTENSION
-===================================================== */
-
-
-/*
-   Instead of only comparing Y,
-   we calculate the distance
-   between the fingertip and wrist.
-
-   This is more stable when
-   the hand rotates.
-*/
-
-function isFingerExtended(
-
-    landmarks,
-
-    tipIndex,
-
-    pipIndex
-
-) {
-
-
-    const wrist =
-        landmarks[0];
-
-
-    const tip =
-        landmarks[
-            tipIndex
-        ];
-
-
-    const pip =
-        landmarks[
-            pipIndex
-        ];
-
-
-    const tipDistance =
-        distance(
-            tip,
-            wrist
-        );
-
-
-    const pipDistance =
-        distance(
-            pip,
-            wrist
-        );
-
-
-    return (
-        tipDistance >
-        pipDistance * 1.10
-    );
-
-}
-
-
-/* =====================================================
-   GESTURE DETECTION
-===================================================== */
-
-function detectGesture(
-    landmarks
-) {
-
-
-    /*
-       Index
-    */
-
-    const index =
-        isFingerExtended(
-            landmarks,
-            8,
-            6
-        );
-
-
-    /*
-       Middle
-    */
-
-    const middle =
-        isFingerExtended(
-            landmarks,
-            12,
-            10
-        );
-
-
-    /*
-       Ring
-    */
-
-    const ring =
-        isFingerExtended(
-            landmarks,
-            16,
-            14
-        );
-
-
-    /*
-       Pinky
-    */
-
-    const pinky =
-        isFingerExtended(
-            landmarks,
-            20,
-            18
-        );
-
-
-    /*
-       ☝️ INDEX ONLY
-    */
-
-    if (
-
-        index &&
-
-        !middle &&
-
-        !ring &&
-
-        !pinky
-
-    ) {
-
-        return "draw";
-
-    }
-
-
-    /*
-       ✋ OPEN HAND
-    */
-
-    if (
-
-        index &&
-
-        middle &&
-
-        ring &&
-
-        pinky
-
-    ) {
-
-        return "pause";
-
-    }
-
-
-    /*
-       ✊ FIST
-    */
-
-    if (
-
-        !index &&
-
-        !middle &&
-
-        !ring &&
-
-        !pinky
-
-    ) {
-
-        return "clear";
-
-    }
-
-
-    /*
-       Partially open hand
-    */
-
-    return "pause";
-
-}
-
-
-/* =====================================================
-   UPDATE MAIN STATUS
-===================================================== */
-
-function updateMainStatus(
-    leftMode,
-    rightMode,
-    handCount
-) {
-
-
-    /*
-       If fist detected
-    */
-
-    if (
-
-        leftMode === "clear" ||
-
-        rightMode === "clear"
-
-    ) {
-
-
-        status.className =
-            "status clear";
-
-
-        status.innerHTML =
-            "✊ CLEAR / DELETE";
-
-
-        return;
-
-    }
-
-
-    /*
-       If at least one
-       hand is drawing
-    */
-
-    if (
-
-        leftMode === "draw" ||
-
-        rightMode === "draw"
-
-    ) {
-
-
-        status.className =
-            "status draw";
-
-
-        if (
-
-            leftMode === "draw" &&
-
-            rightMode === "draw"
-
-        ) {
-
-            status.innerHTML =
-                "☝️☝️ TWO HANDS DRAWING";
-
-        }
-
-        else {
-
-            status.innerHTML =
-                "☝️ DRAW MODE";
-
-        }
-
-
-        return;
-
-    }
-
-
-    /*
-       No drawing
-    */
-
-    if (
-        handCount > 0
-    ) {
-
-
-        status.className =
-            "status pause";
-
-
-        status.innerHTML =
-            "✋ PAUSE MODE";
-
-
-    }
-
-    else {
-
-
-        status.className =
-            "status pause";
-
-
-        status.innerHTML =
-            "👋 SHOW YOUR HAND";
-
-    }
-
-}
-
-
-/* =====================================================
-   UPDATE HAND BOX
-===================================================== */
-
-function updateHandBox(
-    side,
-    mode,
-    detected
-) {
-
-
-    let element;
-
-
-    if (
-        side === "Left"
-    ) {
-
-        element =
-            leftStatus;
-
-    }
-
-    else {
-
-        element =
-            rightStatus;
-
-    }
-
-
-    if (!detected) {
-
-
-        element.className =
-            "handBox";
-
-
-        if (
-            side === "Left"
-        ) {
-
-            element.innerHTML =
-                "👈 LEFT HAND: Not detected";
-
-        }
-
-        else {
-
-            element.innerHTML =
-                "👉 RIGHT HAND: Not detected";
-
-        }
-
-
-        return;
-
-    }
-
-
-    element.className =
-        "handBox active";
-
-
-    if (
-        mode === "draw"
-    ) {
-
-
-        if (
-            side === "Left"
-        ) {
-
-            element.innerHTML =
-                "👈 LEFT: ☝️ DRAW";
-
-        }
-
-        else {
-
-            element.innerHTML =
-                "👉 RIGHT: ☝️ DRAW";
-
-        }
-
-    }
-
-
-    else if (
-        mode === "pause"
-    ) {
-
-
-        if (
-            side === "Left"
-        ) {
-
-            element.innerHTML =
-                "👈 LEFT: ✋ PAUSE";
-
-        }
-
-        else {
-
-            element.innerHTML =
-                "👉 RIGHT: ✋ PAUSE";
-
-        }
-
-    }
-
-
-    else {
-
-
-        if (
-            side === "Left"
-        ) {
-
-            element.innerHTML =
-                "👈 LEFT: ✊ CLEAR";
-
-        }
-
-        else {
-
-            element.innerHTML =
-                "👉 RIGHT: ✊ CLEAR";
-
-        }
-
-    }
-
-}
-
-
-/* =====================================================
-   CLEAR
-===================================================== */
-
-function clearDrawing() {
-
-
-    drawCtx.clearRect(
-
-        0,
-
-        0,
-
-        drawCanvas.width,
-
-        drawCanvas.height
-
-    );
-
-
-    leftPreviousX =
-        null;
-
-
-    leftPreviousY =
-        null;
-
-
-    rightPreviousX =
-        null;
-
-
-    rightPreviousY =
-        null;
-
-
-    flowerCounter =
-        0;
-
-}
-
-
-/* =====================================================
-   SAVE
-===================================================== */
-
-function saveDrawing() {
-
-
-    const temp =
-        document.createElement(
-            "canvas"
-        );
-
-
-    temp.width =
-        drawCanvas.width;
-
-
-    temp.height =
-        drawCanvas.height;
-
-
-    const tempCtx =
-        temp.getContext(
-            "2d"
-        );
-
-
-    /*
-       Background
-    */
-
-    tempCtx.fillStyle =
-        "#080b16";
-
-
-    tempCtx.fillRect(
-
-        0,
-
-        0,
-
-        temp.width,
-
-        temp.height
-
-    );
-
-
-    /*
-       Drawing
-    */
-
-    tempCtx.drawImage(
-
-        drawCanvas,
-
-        0,
-
-        0
-
-    );
-
-
-    /*
-       Download
-    */
-
-    const link =
-        document.createElement(
-            "a"
-        );
-
-
-    link.download =
-        "AirBloom_TwoHands.png";
-
-
-    link.href =
-        temp.toDataURL(
-            "image/png"
-        );
-
-
-    link.click();
-
-}
-
-
-/* =====================================================
-   PROCESS ONE HAND
+   DRAW HAND
 ===================================================== */
 
 function processHand(
-
     landmarks,
-
     side
-
 ) {
 
-
-    /*
-       Detect gesture
-    */
-
     const mode =
-        detectGesture(
-            landmarks
+        stableGesture(
+            landmarks,
+            side
         );
 
 
     /*
-       INDEX
+       Index finger
     */
 
     const index =
@@ -1772,41 +2126,31 @@ function processHand(
 
     /*
        Mirror X
+       because camera display
+       is mirrored.
     */
 
     const x =
-        (
-            1 -
-            index.x
-        )
-        *
+        (1 - index.x) *
         drawCanvas.width;
 
 
     const y =
-        index.y
-        *
+        index.y *
         drawCanvas.height;
 
 
     /*
-       LEFT HAND
+       LEFT
     */
 
     if (
         side === "Left"
     ) {
 
-
         if (
             mode === "draw"
         ) {
-
-
-            /*
-               Connect previous
-               position
-            */
 
             if (
 
@@ -1815,7 +2159,6 @@ function processHand(
                 leftPreviousY !== null
 
             ) {
-
 
                 drawConnection(
 
@@ -1832,41 +2175,25 @@ function processHand(
             }
 
 
-            /*
-               Flower
-            */
-
             drawFlower(
-
                 x,
-
                 y,
-
                 "Left"
-
             );
 
-
-            /*
-               Save position
-            */
 
             leftPreviousX =
                 x;
 
-
             leftPreviousY =
                 y;
-
 
         }
 
         else {
 
-
             leftPreviousX =
                 null;
-
 
             leftPreviousY =
                 null;
@@ -1877,16 +2204,14 @@ function processHand(
 
 
     /*
-       RIGHT HAND
+       RIGHT
     */
 
     else {
 
-
         if (
             mode === "draw"
         ) {
-
 
             if (
 
@@ -1895,7 +2220,6 @@ function processHand(
                 rightPreviousY !== null
 
             ) {
-
 
                 drawConnection(
 
@@ -1913,32 +2237,24 @@ function processHand(
 
 
             drawFlower(
-
                 x,
-
                 y,
-
                 "Right"
-
             );
 
 
             rightPreviousX =
                 x;
 
-
             rightPreviousY =
                 y;
-
 
         }
 
         else {
 
-
             rightPreviousX =
                 null;
-
 
             rightPreviousY =
                 null;
@@ -1954,21 +2270,13 @@ function processHand(
 
 
 /* =====================================================
-   DRAW HAND SKELETON
+   DRAW SKELETON
 ===================================================== */
 
 function drawHandSkeleton(
-
     landmarks,
-
     side
-
 ) {
-
-
-    /*
-       Connections
-    */
 
     const connections = [
 
@@ -2001,11 +2309,6 @@ function drawHandSkeleton(
 
     ];
 
-
-    /*
-       Different skeleton
-       color for each hand
-    */
 
     if (
         side === "Left"
@@ -2043,42 +2346,30 @@ function drawHandSkeleton(
         of connections
     ) {
 
-
         const a =
-            pair[0];
-
+            landmarks[pair[0]];
 
         const b =
-            pair[1];
+            landmarks[pair[1]];
 
 
         const x1 =
-            (
-                1 -
-                landmarks[a].x
-            )
-            *
+            (1 - a.x) *
             handCanvas.width;
 
 
         const y1 =
-            landmarks[a].y
-            *
+            a.y *
             handCanvas.height;
 
 
         const x2 =
-            (
-                1 -
-                landmarks[b].x
-            )
-            *
+            (1 - b.x) *
             handCanvas.width;
 
 
         const y2 =
-            landmarks[b].y
-            *
+            b.y *
             handCanvas.height;
 
 
@@ -2103,7 +2394,7 @@ function drawHandSkeleton(
 
 
     /*
-       Landmarks
+       Points
     */
 
     for (
@@ -2111,19 +2402,13 @@ function drawHandSkeleton(
         of landmarks
     ) {
 
-
         const x =
-            (
-                1 -
-                point.x
-            )
-            *
+            (1 - point.x) *
             handCanvas.width;
 
 
         const y =
-            point.y
-            *
+            point.y *
             handCanvas.height;
 
 
@@ -2153,13 +2438,423 @@ function drawHandSkeleton(
 
 
 /* =====================================================
+   UPDATE HAND BOX
+===================================================== */
+
+function updateHandBox(
+    side,
+    mode,
+    detected
+) {
+
+    const element =
+        side === "Left"
+            ? leftStatus
+            : rightStatus;
+
+
+    element.className =
+        "handBox";
+
+
+    if (!detected) {
+
+        element.innerHTML =
+            side === "Left"
+                ? "👈 LEFT HAND: Not detected"
+                : "👉 RIGHT HAND: Not detected";
+
+        return;
+
+    }
+
+
+    element.classList.add(
+        "active"
+    );
+
+
+    if (
+        mode === "draw"
+    ) {
+
+        element.classList.add(
+            "draw"
+        );
+
+
+        if (
+            side === "Right"
+        ) {
+
+            element.classList.add(
+                "right"
+            );
+
+        }
+
+
+        element.innerHTML =
+            side === "Left"
+                ? "👈 LEFT: ☝️ DRAW"
+                : "👉 RIGHT: ☝️ DRAW";
+
+    }
+
+    else if (
+        mode === "clear"
+    ) {
+
+        element.innerHTML =
+            side === "Left"
+                ? "👈 LEFT: ✊ CLEAR"
+                : "👉 RIGHT: ✊ CLEAR";
+
+    }
+
+    else {
+
+        element.innerHTML =
+            side === "Left"
+                ? "👈 LEFT: ✋ PAUSE"
+                : "👉 RIGHT: ✋ PAUSE";
+
+    }
+
+}
+
+
+/* =====================================================
+   UPDATE MAIN STATUS
+===================================================== */
+
+function updateMainStatus(
+    leftMode,
+    rightMode,
+    handCount
+) {
+
+    /*
+       Clear
+    */
+
+    if (
+
+        leftMode === "clear" ||
+
+        rightMode === "clear"
+
+    ) {
+
+        status.className =
+            "status clear";
+
+        status.innerHTML =
+            "✊ CLEAR / DELETE";
+
+        return;
+
+    }
+
+
+    /*
+       Drawing
+    */
+
+    if (
+
+        leftMode === "draw" &&
+
+        rightMode === "draw"
+
+    ) {
+
+        status.className =
+            "status draw";
+
+        status.innerHTML =
+            "☝️☝️ TWO HANDS DRAWING";
+
+        return;
+
+    }
+
+
+    if (
+
+        leftMode === "draw" ||
+
+        rightMode === "draw"
+
+    ) {
+
+        status.className =
+            "status draw";
+
+        status.innerHTML =
+            "☝️ DRAW MODE";
+
+        return;
+
+    }
+
+
+    /*
+       Pause
+    */
+
+    status.className =
+        "status pause";
+
+
+    if (
+        handCount > 0
+    ) {
+
+        status.innerHTML =
+            "✋ PAUSE MODE";
+
+    }
+
+    else {
+
+        status.innerHTML =
+            "👋 SHOW YOUR HAND";
+
+    }
+
+}
+
+
+/* =====================================================
+   CLEAR DRAWING
+===================================================== */
+
+function clearDrawing() {
+
+    drawCtx.clearRect(
+
+        0,
+
+        0,
+
+        drawCanvas.width,
+
+        drawCanvas.height
+
+    );
+
+
+    leftPreviousX =
+        null;
+
+    leftPreviousY =
+        null;
+
+    rightPreviousX =
+        null;
+
+    rightPreviousY =
+        null;
+
+
+    flowerCounter =
+        0;
+
+
+    gestureHistory.Left =
+        [];
+
+    gestureHistory.Right =
+        [];
+
+
+    info.innerHTML =
+        "🗑️ Drawing cleared";
+
+}
+
+
+/* =====================================================
+   SAVE DRAWING
+===================================================== */
+
+function saveDrawing() {
+
+    if (
+        drawCanvas.width === 0 ||
+        drawCanvas.height === 0
+    ) {
+
+        return;
+
+    }
+
+
+    const temp =
+        document.createElement(
+            "canvas"
+        );
+
+
+    temp.width =
+        drawCanvas.width;
+
+
+    temp.height =
+        drawCanvas.height;
+
+
+    const ctx =
+        temp.getContext(
+            "2d"
+        );
+
+
+    /*
+       Background
+    */
+
+    ctx.fillStyle =
+        "#080b16";
+
+
+    ctx.fillRect(
+
+        0,
+
+        0,
+
+        temp.width,
+
+        temp.height
+
+    );
+
+
+    /*
+       Drawing
+    */
+
+    ctx.drawImage(
+
+        drawCanvas,
+
+        0,
+
+        0
+
+    );
+
+
+    /*
+       Download
+    */
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.download =
+        "AirBloom_Drawing.png";
+
+
+    link.href =
+        temp.toDataURL(
+            "image/png"
+        );
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+
+    info.innerHTML =
+        "💾 Drawing saved!";
+
+}
+
+
+/* =====================================================
+   MEDIAPIPE
+===================================================== */
+
+const hands =
+    new Hands({
+
+        locateFile:
+            function(file) {
+
+                return (
+                    "https://cdn.jsdelivr.net/npm/@mediapipe/hands/"
+                    + file
+                );
+
+            }
+
+    });
+
+
+/*
+   SETTINGS
+*/
+
+hands.setOptions({
+
+    /*
+       TWO HANDS
+    */
+
+    maxNumHands:
+        2,
+
+
+    /*
+       0 = faster
+       1 = more accurate
+
+       We use 1 because
+       you want stable detection.
+    */
+
+    modelComplexity:
+        1,
+
+
+    /*
+       Detection threshold
+    */
+
+    minDetectionConfidence:
+        0.60,
+
+
+    /*
+       Tracking threshold
+    */
+
+    minTrackingConfidence:
+        0.60
+
+});
+
+
+/* =====================================================
    MEDIAPIPE RESULTS
 ===================================================== */
 
 function onResults(
     results
 ) {
-
 
     /*
        Clear skeleton
@@ -2179,67 +2874,8 @@ function onResults(
 
 
     /*
-       Reset statuses
+       Reset
     */
-
-    updateHandBox(
-        "Left",
-        "pause",
-        false
-    );
-
-
-    updateHandBox(
-        "Right",
-        "pause",
-        false
-    );
-
-
-    /*
-       No hands
-    */
-
-    if (
-
-        !results.multiHandLandmarks ||
-
-        results.multiHandLandmarks.length === 0
-
-    ) {
-
-
-        updateMainStatus(
-            "pause",
-            "pause",
-            0
-        );
-
-
-        leftPreviousX =
-            null;
-
-
-        leftPreviousY =
-            null;
-
-
-        rightPreviousX =
-            null;
-
-
-        rightPreviousY =
-            null;
-
-
-        info.innerHTML =
-            "👋 No hand detected";
-
-
-        return;
-
-    }
-
 
     let leftMode =
         "pause";
@@ -2258,7 +2894,68 @@ function onResults(
 
 
     /*
-       Process BOTH hands
+       No hands
+    */
+
+    if (
+
+        !results.multiHandLandmarks ||
+
+        results.multiHandLandmarks.length === 0
+
+    ) {
+
+        updateHandBox(
+            "Left",
+            "pause",
+            false
+        );
+
+
+        updateHandBox(
+            "Right",
+            "pause",
+            false
+        );
+
+
+        updateMainStatus(
+            "pause",
+            "pause",
+            0
+        );
+
+
+        leftPreviousX =
+            null;
+
+        leftPreviousY =
+            null;
+
+        rightPreviousX =
+            null;
+
+        rightPreviousY =
+            null;
+
+
+        gestureHistory.Left =
+            [];
+
+        gestureHistory.Right =
+            [];
+
+
+        info.innerHTML =
+            "👋 No hand detected";
+
+        return;
+
+    }
+
+
+    /*
+       Process hands
     */
 
     for (
@@ -2268,19 +2965,23 @@ function onResults(
         results.multiHandLandmarks.length;
 
         i++
-
     ) {
-
 
         const landmarks =
             results.multiHandLandmarks[i];
 
 
         /*
-           Get LEFT / RIGHT
+           MediaPipe handedness
+
+           Because the video is
+           displayed mirrored, we
+           swap the labels to make
+           them correspond to what
+           the user sees.
         */
 
-        let side =
+        let mediaSide =
             "Right";
 
 
@@ -2292,8 +2993,7 @@ function onResults(
 
         ) {
 
-
-            side =
+            mediaSide =
                 results
                     .multiHandedness[i]
                     .label;
@@ -2302,44 +3002,46 @@ function onResults(
 
 
         /*
-           Process hand
+           Swap for selfie display
+        */
+
+        const side =
+            mediaSide === "Left"
+                ? "Right"
+                : "Left";
+
+
+        /*
+           Process
         */
 
         const mode =
             processHand(
-
                 landmarks,
-
                 side
-
             );
 
 
         /*
-           Draw skeleton
+           Skeleton
         */
 
         drawHandSkeleton(
-
             landmarks,
-
             side
-
         );
 
 
         /*
-           Save status
+           Save state
         */
 
         if (
             side === "Left"
         ) {
 
-
             leftMode =
                 mode;
-
 
             leftDetected =
                 true;
@@ -2348,10 +3050,8 @@ function onResults(
 
         else {
 
-
             rightMode =
                 mode;
-
 
             rightDetected =
                 true;
@@ -2362,7 +3062,7 @@ function onResults(
 
 
     /*
-       Update hand boxes
+       Update UI
     */
 
     updateHandBox(
@@ -2387,10 +3087,6 @@ function onResults(
     );
 
 
-    /*
-       Main status
-    */
-
     updateMainStatus(
 
         leftMode,
@@ -2403,7 +3099,7 @@ function onResults(
 
 
     /*
-       CLEAR if fist
+       CLEAR
     */
 
     if (
@@ -2414,20 +3110,14 @@ function onResults(
 
     ) {
 
-
         const now =
             Date.now();
 
 
         if (
-
-            now -
-            lastClearTime
-            >
-            1000
-
+            now - lastClearTime
+            > 1200
         ) {
-
 
             clearDrawing();
 
@@ -2441,7 +3131,7 @@ function onResults(
 
 
     /*
-       Information
+       Info
     */
 
     info.innerHTML =
@@ -2450,145 +3140,148 @@ function onResults(
 
         results.multiHandLandmarks.length +
 
-        " hand(s) detected";
+        " hand" +
+
+        (
+            results.multiHandLandmarks.length > 1
+                ? "s"
+                : ""
+        ) +
+
+        " detected";
 
 }
 
 
 /* =====================================================
-   MEDIAPIPE HANDS
-===================================================== */
-
-const hands =
-    new Hands({
-
-        locateFile:
-            (file) => {
-
-                return `
-https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}
-                `;
-
-            }
-
-    });
-
-
-/*
-   IMPORTANT:
-   TWO HANDS
-*/
-
-hands.setOptions({
-
-    maxNumHands:
-        2,
-
-
-    /*
-       0 = faster
-       1 = more accurate
-    */
-
-    modelComplexity:
-        0,
-
-
-    /*
-       Lower values allow
-       faster detection.
-    */
-
-    minDetectionConfidence:
-        0.50,
-
-
-    minTrackingConfidence:
-        0.50
-
-});
-
-
-/*
-   Results callback
-*/
-
-hands.onResults(
-    onResults
-);
-
-
-/* =====================================================
-   CAMERA
-===================================================== */
-
-const camera =
-    new Camera(
-
-        video,
-
-        {
-
-            onFrame:
-                async () => {
-
-                    await hands.send({
-
-                        image:
-                            video
-
-                    });
-
-                },
-
-
-            width:
-                1280,
-
-
-            height:
-                720
-
-        }
-
-    );
-
-
-/* =====================================================
-   START
+   START CAMERA
 ===================================================== */
 
 async function startAirBloom() {
 
+    if (
+        cameraStarted
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+       Check HTTPS
+
+       localhost is also allowed.
+    */
+
+    const secure =
+        window.isSecureContext;
+
+
+    if (
+        !secure
+    ) {
+
+        loadingText.innerHTML =
+
+            "⚠️ Camera requires HTTPS";
+
+        startButton.style.display =
+            "none";
+
+
+        info.innerHTML =
+            "Open this site using GitHub Pages HTTPS.";
+
+
+        return;
+
+    }
+
 
     try {
 
+        loadingText.innerHTML =
+            "🌸 Requesting camera...";
+
+
+        startButton.disabled =
+            true;
+
 
         /*
-           Start camera
+           IMPORTANT:
+           Ask permission through
+           getUserMedia first.
+
+           This works better on
+           mobile browsers.
         */
 
-        await camera.start();
+        const stream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+
+                    video: {
+
+                        facingMode:
+                            "user",
+
+                        width: {
+                            ideal: 1280
+                        },
+
+                        height: {
+                            ideal: 720
+                        }
+
+                    },
+
+                    audio: false
+
+                });
 
 
         /*
-           Hide loading
+           Attach camera stream
         */
 
-        loading.style.display =
+        video.srcObject =
+            stream;
+
+
+        await video.play();
+
+
+        cameraStarted =
+            true;
+
+
+        loadingText.innerHTML =
+            "🌸 AirBloom is ready!";
+
+
+        startButton.style.display =
             "none";
 
 
         /*
-           Resize
+           Resize after video
         */
 
-        resizeCanvas();
+        setTimeout(
+            resizeCanvas,
+            100
+        );
 
 
         /*
-           Message
+           Start processing
         */
+
+        processVideo();
+
 
         info.innerHTML =
             "👋 Show one or two hands";
@@ -2598,22 +3291,25 @@ async function startAirBloom() {
 
     catch (error) {
 
-
-        loading.innerHTML = `
-
-            ❌ Camera access denied.
-
-            <br><br>
-
-            Please allow camera access
-            in your browser.
-
-        `;
-
-
         console.error(
             error
         );
+
+
+        startButton.disabled =
+            false;
+
+
+        loadingText.innerHTML =
+            "❌ Camera could not start";
+
+
+        startButton.innerHTML =
+            "📷 Try Again";
+
+
+        info.innerHTML =
+            "Please allow camera access in your browser.";
 
     }
 
@@ -2621,17 +3317,80 @@ async function startAirBloom() {
 
 
 /* =====================================================
-   START AIRBLOOM
+   VIDEO PROCESSING LOOP
 ===================================================== */
 
-startAirBloom();
+async function processVideo() {
+
+    if (
+        !cameraStarted
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+       Avoid overlapping
+       MediaPipe calls.
+    */
+
+    if (
+        !processing
+    ) {
+
+        processing =
+            true;
+
+
+        try {
+
+            await hands.send({
+
+                image:
+                    video
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                error
+            );
+
+        }
+
+
+        processing =
+            false;
+
+    }
+
+
+    /*
+       Continue loop
+    */
+
+    requestAnimationFrame(
+        processVideo
+    );
+
+}
+
+
+/* =====================================================
+   INITIAL UI
+===================================================== */
+
+loading.style.display =
+    "flex";
 
 
 </script>
 
-
 </body>
 
 </html>
-
-'''))
