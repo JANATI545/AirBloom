@@ -1,291 +1,505 @@
+from IPython.display import HTML, display
+
+display(HTML(r'''
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>AirBloom 🌸</title>
+<meta charset="UTF-8">
 
-    <style>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-        * {
-            box-sizing: border-box;
-        }
+<title>🌸 AirBloom - Two Hands</title>
 
-        body {
-            margin: 0;
-            min-height: 100vh;
 
-            background:
-                radial-gradient(circle at top, #2a1630, #0d0d14 65%);
+<!-- =====================================================
+     MEDIAPIPE
+===================================================== -->
 
-            color: white;
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
 
-            text-align: center;
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
-            padding: 25px;
-        }
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
 
-        h1 {
-            margin: 0;
+<style>
 
-            font-size: 42px;
+/* =====================================================
+   GLOBAL
+===================================================== */
 
-            letter-spacing: 1px;
-        }
+* {
+    box-sizing: border-box;
+}
 
 
-        .subtitle {
-            margin-top: 8px;
-            margin-bottom: 25px;
+body {
 
-            color: #d8d8d8;
+    margin: 0;
 
-            font-size: 17px;
-        }
+    min-height: 100vh;
 
+    padding: 20px;
 
-        /* ================================
-           CAMERA CONTAINER
-        ================================= */
+    background:
+        radial-gradient(
+            circle at top left,
+            #32135e,
+            transparent 35%
+        ),
 
-        #container {
+        radial-gradient(
+            circle at bottom right,
+            #063f5c,
+            transparent 35%
+        ),
 
-            position: relative;
+        #080b16;
 
-            width: 900px;
+    color: white;
 
-            max-width: 95vw;
+    font-family: Arial, sans-serif;
 
-            margin: auto;
+    display: flex;
 
-            overflow: hidden;
+    justify-content: center;
 
-            border-radius: 20px;
+    align-items: center;
 
-            box-shadow:
-                0 20px 60px rgba(0, 0, 0, 0.5);
+}
 
-            background: #000;
-        }
 
+/* =====================================================
+   APP
+===================================================== */
 
-        video {
+.app {
 
-            width: 100%;
+    width: 100%;
 
-            display: block;
+    max-width: 1200px;
 
-            transform: scaleX(-1);
-        }
+    text-align: center;
 
+}
 
-        #canvas {
 
-            position: absolute;
+/* =====================================================
+   TITLE
+===================================================== */
 
-            left: 0;
-            top: 0;
+h1 {
 
-            width: 100%;
-            height: 100%;
+    margin: 5px 0;
 
-            pointer-events: none;
+    font-size: 44px;
 
-            transform: scaleX(-1);
-        }
+    background:
+        linear-gradient(
+            90deg,
+            #ff8bd4,
+            #c59cff,
+            #65d9ff
+        );
 
+    -webkit-background-clip: text;
 
-        /* ================================
-           CONTROLS
-        ================================= */
+    -webkit-text-fill-color: transparent;
 
-        #ui {
+}
 
-            margin-top: 20px;
 
-            display: flex;
+.subtitle {
 
-            justify-content: center;
+    color: #c9c9d8;
 
-            flex-wrap: wrap;
+    margin-bottom: 20px;
 
-            gap: 10px;
-        }
+}
 
 
-        button {
+/* =====================================================
+   CAMERA
+===================================================== */
 
-            border: none;
+.stage {
 
-            padding:
-                13px
-                22px;
+    position: relative;
 
-            border-radius: 12px;
+    width: 100%;
 
-            font-size: 16px;
+    max-width: 1050px;
 
-            font-weight: bold;
+    margin: auto;
 
-            cursor: pointer;
+    border-radius: 25px;
 
-            transition:
-                transform 0.2s,
-                opacity 0.2s;
-        }
+    overflow: hidden;
 
+    background: #000;
 
-        button:hover {
+    box-shadow:
+        0 0 45px
+        rgba(160,100,255,.30);
 
-            transform: translateY(-2px);
+}
 
-            opacity: 0.9;
-        }
 
+/* CAMERA */
 
-        #startButton {
+#video {
 
-            background: #ff69b4;
+    width: 100%;
 
-            color: white;
-        }
+    display: block;
 
+    transform: scaleX(-1);
 
-        #clearButton {
+}
 
-            background: #444;
 
-            color: white;
-        }
+/* DRAWING */
 
+#drawCanvas {
 
-        #saveButton {
+    position: absolute;
 
-            background: #6c63ff;
+    left: 0;
 
-            color: white;
-        }
+    top: 0;
 
+    width: 100%;
 
-        /* ================================
-           STATUS
-        ================================= */
+    height: 100%;
 
-        #status {
+    pointer-events: none;
 
-            margin-top: 18px;
+}
 
-            font-size: 18px;
 
-            font-weight: bold;
+/* HAND SKELETON */
 
-            min-height: 25px;
-        }
+#handCanvas {
 
+    position: absolute;
 
-        /* ================================
-           CLEAR PROGRESS
-        ================================= */
+    left: 0;
 
-        #clearProgressContainer {
+    top: 0;
 
-            width: 300px;
+    width: 100%;
 
-            max-width: 80vw;
+    height: 100%;
 
-            height: 12px;
+    pointer-events: none;
 
-            background: #333;
+}
 
-            margin:
-                12px
-                auto;
 
-            border-radius: 20px;
+/* =====================================================
+   LOADING
+===================================================== */
 
-            overflow: hidden;
-        }
+#loading {
 
+    position: absolute;
 
-        #clearProgress {
+    inset: 0;
 
-            width: 0%;
+    display: flex;
 
-            height: 100%;
+    justify-content: center;
 
-            background: #ff4444;
+    align-items: center;
 
-            transition:
-                width 0.05s linear;
-        }
+    background:
+        rgba(5,5,15,.88);
 
+    z-index: 20;
 
-        /* ================================
-           INSTRUCTIONS
-        ================================= */
+    font-size: 20px;
 
-        #instructions {
+    font-weight: bold;
 
-            margin-top: 20px;
+}
 
-            line-height: 2;
 
-            color: #ddd;
+/* =====================================================
+   STATUS
+===================================================== */
 
-            font-size: 15px;
-        }
+.status {
 
+    margin: 18px auto;
 
-        .gesture {
+    width: fit-content;
 
-            display: inline-block;
+    padding: 12px 25px;
 
-            margin:
-                0
-                8px;
-        }
+    border-radius: 30px;
 
+    font-size: 18px;
 
-        /* ================================
-           MOBILE
-        ================================= */
+    font-weight: bold;
 
-        @media (max-width: 600px) {
+    background:
+        rgba(255,255,255,.08);
 
-            body {
-                padding: 15px;
-            }
+    border:
+        1px solid
+        rgba(255,255,255,.15);
 
+    backdrop-filter:
+        blur(10px);
 
-            h1 {
-                font-size: 32px;
-            }
+}
 
 
-            .subtitle {
-                font-size: 14px;
-            }
+.status.draw {
 
+    color: #ff8bd4;
 
-            button {
-                padding:
-                    11px
-                    16px;
+}
 
-                font-size: 14px;
-            }
 
-        }
+.status.pause {
 
-    </style>
+    color: #ffd166;
+
+}
+
+
+.status.clear {
+
+    color: #ff6b6b;
+
+}
+
+
+/* =====================================================
+   HAND STATUS
+===================================================== */
+
+.handsStatus {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 15px;
+
+    flex-wrap: wrap;
+
+    margin-bottom: 15px;
+
+}
+
+
+.handBox {
+
+    padding: 10px 18px;
+
+    min-width: 180px;
+
+    border-radius: 15px;
+
+    background:
+        rgba(255,255,255,.06);
+
+    border:
+        1px solid
+        rgba(255,255,255,.10);
+
+    color: #aaa;
+
+}
+
+
+.handBox.active {
+
+    color: white;
+
+    background:
+        rgba(255,255,255,.10);
+
+}
+
+
+/* =====================================================
+   CONTROLS
+===================================================== */
+
+.controls {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    flex-wrap: wrap;
+
+    margin-top: 15px;
+
+}
+
+
+button {
+
+    border: none;
+
+    padding: 13px 25px;
+
+    border-radius: 25px;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    color: white;
+
+    transition: .2s;
+
+}
+
+
+button:hover {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 8px 25px
+        rgba(180,100,255,.35);
+
+}
+
+
+button.clear {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff416c,
+            #ff4b2b
+        );
+
+}
+
+
+button.save {
+
+    background:
+        linear-gradient(
+            135deg,
+            #00b894,
+            #00cec9
+        );
+
+}
+
+
+/* =====================================================
+   INSTRUCTIONS
+===================================================== */
+
+.instructions {
+
+    margin: 25px auto 0;
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    flex-wrap: wrap;
+
+}
+
+
+.gesture {
+
+    padding: 12px 18px;
+
+    border-radius: 15px;
+
+    background:
+        rgba(255,255,255,.07);
+
+    border:
+        1px solid
+        rgba(255,255,255,.10);
+
+    min-width: 170px;
+
+}
+
+
+.gesture span {
+
+    font-size: 27px;
+
+}
+
+
+.gesture small {
+
+    display: block;
+
+    margin-top: 5px;
+
+    color: #aaa;
+
+}
+
+
+#info {
+
+    margin-top: 12px;
+
+    color: #aaa;
+
+    font-size: 14px;
+
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width:700px) {
+
+    body {
+
+        padding: 10px;
+
+    }
+
+    h1 {
+
+        font-size: 34px;
+
+    }
+
+    .stage {
+
+        border-radius: 18px;
+
+    }
+
+}
+
+</style>
 
 </head>
 
@@ -293,20 +507,40 @@
 <body>
 
 
-    <h1>🌸 AirBloom</h1>
+<div class="app">
+
+
+    <!-- =================================================
+         TITLE
+    ================================================= -->
+
+    <h1>
+
+        🌸 AirBloom
+
+    </h1>
+
 
     <div class="subtitle">
 
-        Draw flowers in the air with your finger ✨
+        Draw beautiful flowers with both hands
 
     </div>
 
 
-    <!-- =========================================
-         CAMERA
-    ========================================== -->
+    <!-- =================================================
+         CAMERA STAGE
+    ================================================= -->
 
-    <div id="container">
+    <div class="stage">
+
+
+        <div id="loading">
+
+            🌸 Loading camera & hand tracking...
+
+        </div>
+
 
         <video
             id="video"
@@ -314,194 +548,336 @@
             playsinline>
         </video>
 
+
         <canvas
-            id="canvas">
+            id="drawCanvas">
         </canvas>
+
+
+        <canvas
+            id="handCanvas">
+        </canvas>
+
 
     </div>
 
 
-    <!-- =========================================
+    <!-- =================================================
+         MAIN STATUS
+    ================================================= -->
+
+    <div
+        id="status"
+        class="status pause">
+
+        ⏸️ PAUSE MODE
+
+    </div>
+
+
+    <!-- =================================================
+         LEFT / RIGHT STATUS
+    ================================================= -->
+
+    <div class="handsStatus">
+
+
+        <div
+            id="leftStatus"
+            class="handBox">
+
+            👈 LEFT HAND:
+            Not detected
+
+        </div>
+
+
+        <div
+            id="rightStatus"
+            class="handBox">
+
+            👉 RIGHT HAND:
+            Not detected
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =================================================
          BUTTONS
-    ========================================== -->
+    ================================================= -->
 
-    <div id="ui">
-
-        <button id="startButton">
-
-            📷 Start Camera
-
-        </button>
+    <div class="controls">
 
 
-        <button id="clearButton">
+        <button
+            class="clear"
+            onclick="clearDrawing()">
 
             🗑️ Clear
 
         </button>
 
 
-        <button id="saveButton">
+        <button
+            class="save"
+            onclick="saveDrawing()">
 
-            💾 Save
+            💾 Save Drawing
 
         </button>
 
-    </div>
-
-
-    <!-- =========================================
-         STATUS
-    ========================================== -->
-
-    <div id="status">
-
-        🌸 Click "Start Camera"
 
     </div>
 
 
-    <!-- =========================================
-         CLEAR PROGRESS
-    ========================================== -->
-
-    <div id="clearProgressContainer">
-
-        <div id="clearProgress"></div>
-
-    </div>
-
-
-    <!-- =========================================
+    <!-- =================================================
          INSTRUCTIONS
-    ========================================== -->
+    ================================================= -->
 
-    <div id="instructions">
+    <div class="instructions">
 
-        <div class="gesture">
-
-            ☝️ <b>Index only</b>
-            → Draw 🌸
-
-        </div>
-
-        <br>
 
         <div class="gesture">
 
-            ✋ <b>Open hand</b>
-            → Pause
+            <span>☝️</span>
+
+            <b>DRAW</b>
+
+            <small>
+
+                Index finger only
+
+            </small>
 
         </div>
 
-        <br>
 
         <div class="gesture">
 
-            ✊ <b>Closed fist for 1 second</b>
-            → Clear
+            <span>✋</span>
+
+            <b>PAUSE</b>
+
+            <small>
+
+                Open hand
+
+            </small>
 
         </div>
+
+
+        <div class="gesture">
+
+            <span>✊</span>
+
+            <b>CLEAR</b>
+
+            <small>
+
+                Closed fist
+
+            </small>
+
+        </div>
+
 
     </div>
 
 
+    <div id="info">
 
-<script type="module">
+        Waiting for hands...
+
+    </div>
 
 
-/* =====================================================
-   MEDIAPIPE
-===================================================== */
+</div>
 
-import {
-    HandLandmarker,
-    FilesetResolver
-}
 
-from
-"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22";
-
+<script>
 
 
 /* =====================================================
-   HTML ELEMENTS
+   ELEMENTS
 ===================================================== */
 
 const video =
-    document.getElementById("video");
+    document.getElementById(
+        "video"
+    );
 
 
-const canvas =
-    document.getElementById("canvas");
+const drawCanvas =
+    document.getElementById(
+        "drawCanvas"
+    );
 
 
-const ctx =
-    canvas.getContext("2d");
+const handCanvas =
+    document.getElementById(
+        "handCanvas"
+    );
 
 
-const startButton =
-    document.getElementById("startButton");
+const drawCtx =
+    drawCanvas.getContext(
+        "2d"
+    );
 
 
-const clearButton =
-    document.getElementById("clearButton");
-
-
-const saveButton =
-    document.getElementById("saveButton");
+const handCtx =
+    handCanvas.getContext(
+        "2d"
+    );
 
 
 const status =
-    document.getElementById("status");
+    document.getElementById(
+        "status"
+    );
 
 
-const clearProgress =
-    document.getElementById("clearProgress");
+const loading =
+    document.getElementById(
+        "loading"
+    );
 
+
+const info =
+    document.getElementById(
+        "info"
+    );
+
+
+const leftStatus =
+    document.getElementById(
+        "leftStatus"
+    );
+
+
+const rightStatus =
+    document.getElementById(
+        "rightStatus"
+    );
 
 
 /* =====================================================
    VARIABLES
 ===================================================== */
 
-let handLandmarker = null;
 
-let running = false;
+/*
+   Previous position for
+   LEFT hand
+*/
 
-let lastX = null;
+let leftPreviousX =
+    null;
 
-let lastY = null;
+let leftPreviousY =
+    null;
 
-let clearStartTime = null;
+
+/*
+   Previous position for
+   RIGHT hand
+*/
+
+let rightPreviousX =
+    null;
+
+let rightPreviousY =
+    null;
 
 
-const CLEAR_HOLD_TIME = 1000;
+/*
+   Clear cooldown
+*/
 
+let lastClearTime =
+    0;
+
+
+/*
+   Flower counter
+*/
+
+let flowerCounter =
+    0;
 
 
 /* =====================================================
-   FLOWER COLORS
+   COLORS
 ===================================================== */
 
-const flowerColors = [
+const colors = [
 
     "#ff69b4",
 
-    "#ff1493",
+    "#ff9de2",
 
-    "#ba68c8",
+    "#c77dff",
 
-    "#9c27b0",
+    "#9b5de5",
 
-    "#64b5f6",
+    "#00bbf9",
 
-    "#4dd0e1",
+    "#00f5d4",
 
-    "#ffffff"
+    "#fee440",
+
+    "#ff7b00"
 
 ];
 
+
+/* =====================================================
+   CANVAS SIZE
+===================================================== */
+
+function resizeCanvas() {
+
+
+    const rect =
+        video.getBoundingClientRect();
+
+
+    if (
+        rect.width <= 0 ||
+        rect.height <= 0
+    ) {
+
+        return;
+
+    }
+
+
+    drawCanvas.width =
+        rect.width;
+
+
+    drawCanvas.height =
+        rect.height;
+
+
+    handCanvas.width =
+        rect.width;
+
+
+    handCanvas.height =
+        rect.height;
+
+}
+
+
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
 
 
 /* =====================================================
@@ -511,155 +887,346 @@ const flowerColors = [
 function drawFlower(
     x,
     y,
-    size = 18
+    handSide
 ) {
-
-    const color =
-        flowerColors[
-            Math.floor(
-                Math.random() *
-                flowerColors.length
-            )
-        ];
 
 
     /*
-       PETALS
+       Different color
+       depending on hand
     */
 
-    ctx.fillStyle = color;
+    let color;
 
 
-    for (
-        let angle = 0;
-
-        angle < Math.PI * 2;
-
-        angle += Math.PI / 2
+    if (
+        handSide === "Left"
     ) {
 
-        const px =
-            x +
-            Math.cos(angle)
-            * size
-            * 0.55;
+        color =
+            "#ff72c6";
 
+    }
 
-        const py =
-            y +
-            Math.sin(angle)
-            * size
-            * 0.55;
+    else {
 
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-            px,
-            py,
-
-            size * 0.42,
-
-            0,
-            Math.PI * 2
-        );
-
-
-        ctx.fill();
+        color =
+            "#67d9ff";
 
     }
 
 
     /*
-       CENTER
+       Occasionally use
+       another color
     */
 
-    ctx.fillStyle =
-        "#ffd700";
+    if (
+        flowerCounter % 5 === 0
+    ) {
+
+        color =
+            colors[
+                flowerCounter %
+                colors.length
+            ];
+
+    }
 
 
-    ctx.beginPath();
+    flowerCounter++;
 
 
-    ctx.arc(
+    const size =
+        6 +
+        Math.random() * 7;
 
+
+    drawCtx.save();
+
+
+    drawCtx.translate(
         x,
-        y,
+        y
+    );
 
-        size * 0.32,
+
+    /*
+       Glow
+    */
+
+    drawCtx.shadowBlur =
+        15;
+
+
+    drawCtx.shadowColor =
+        color;
+
+
+    /*
+       Petals
+    */
+
+    for (
+        let i = 0;
+        i < 5;
+        i++
+    ) {
+
+
+        const angle =
+            i *
+            (
+                Math.PI *
+                2 /
+                5
+            );
+
+
+        const px =
+            Math.cos(angle) *
+            size;
+
+
+        const py =
+            Math.sin(angle) *
+            size;
+
+
+        drawCtx.beginPath();
+
+
+        drawCtx.fillStyle =
+            color;
+
+
+        drawCtx.globalAlpha =
+            .85;
+
+
+        drawCtx.arc(
+
+            px,
+
+            py,
+
+            size * .65,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        drawCtx.fill();
+
+    }
+
+
+    /*
+       Center
+    */
+
+    drawCtx.beginPath();
+
+
+    drawCtx.fillStyle =
+        "#fff3a3";
+
+
+    drawCtx.globalAlpha =
+        1;
+
+
+    drawCtx.arc(
 
         0,
+
+        0,
+
+        size * .42,
+
+        0,
+
         Math.PI * 2
 
     );
 
 
-    ctx.fill();
+    drawCtx.fill();
+
+
+    /*
+       Sparkle
+    */
+
+    if (
+        flowerCounter % 3 === 0
+    ) {
+
+
+        drawCtx.fillStyle =
+            "white";
+
+
+        drawCtx.font =
+            "15px Arial";
+
+
+        drawCtx.fillText(
+
+            "✦",
+
+            size + 5,
+
+            -size - 5
+
+        );
+
+    }
+
+
+    drawCtx.restore();
 
 }
 
 
-
 /* =====================================================
-   CLEAR CANVAS
+   DRAW CONNECTION
 ===================================================== */
 
-function clearCanvas() {
+function drawConnection(
 
-    ctx.clearRect(
+    x1,
+    y1,
+    x2,
+    y2
 
-        0,
-        0,
+) {
 
-        canvas.width,
-        canvas.height
 
+    drawCtx.save();
+
+
+    drawCtx.beginPath();
+
+
+    drawCtx.moveTo(
+        x1,
+        y1
+    );
+
+
+    drawCtx.lineTo(
+        x2,
+        y2
+    );
+
+
+    drawCtx.strokeStyle =
+        "rgba(255,255,255,.16)";
+
+
+    drawCtx.lineWidth =
+        2;
+
+
+    drawCtx.stroke();
+
+
+    drawCtx.restore();
+
+}
+
+
+/* =====================================================
+   DISTANCE
+===================================================== */
+
+function distance(
+    a,
+    b
+) {
+
+
+    const dx =
+        a.x - b.x;
+
+
+    const dy =
+        a.y - b.y;
+
+
+    return Math.sqrt(
+        dx * dx +
+        dy * dy
     );
 
 }
 
 
-
 /* =====================================================
-   FINGER DETECTION
+   FINGER EXTENSION
 ===================================================== */
 
-function getFingerStates(
-    landmarks
+
+/*
+   Instead of only comparing Y,
+   we calculate the distance
+   between the fingertip and wrist.
+
+   This is more stable when
+   the hand rotates.
+*/
+
+function isFingerExtended(
+
+    landmarks,
+
+    tipIndex,
+
+    pipIndex
+
 ) {
 
-    const index =
-        landmarks[8].y <
-        landmarks[6].y;
+
+    const wrist =
+        landmarks[0];
 
 
-    const middle =
-        landmarks[12].y <
-        landmarks[10].y;
+    const tip =
+        landmarks[
+            tipIndex
+        ];
 
 
-    const ring =
-        landmarks[16].y <
-        landmarks[14].y;
+    const pip =
+        landmarks[
+            pipIndex
+        ];
 
 
-    const pinky =
-        landmarks[20].y <
-        landmarks[18].y;
+    const tipDistance =
+        distance(
+            tip,
+            wrist
+        );
 
 
-    return {
+    const pipDistance =
+        distance(
+            pip,
+            wrist
+        );
 
-        index,
-        middle,
-        ring,
-        pinky
 
-    };
+    return (
+        tipDistance >
+        pipDistance * 1.10
+    );
 
 }
-
 
 
 /* =====================================================
@@ -670,596 +1237,1379 @@ function detectGesture(
     landmarks
 ) {
 
-    const fingers =
-        getFingerStates(
+
+    /*
+       Index
+    */
+
+    const index =
+        isFingerExtended(
+            landmarks,
+            8,
+            6
+        );
+
+
+    /*
+       Middle
+    */
+
+    const middle =
+        isFingerExtended(
+            landmarks,
+            12,
+            10
+        );
+
+
+    /*
+       Ring
+    */
+
+    const ring =
+        isFingerExtended(
+            landmarks,
+            16,
+            14
+        );
+
+
+    /*
+       Pinky
+    */
+
+    const pinky =
+        isFingerExtended(
+            landmarks,
+            20,
+            18
+        );
+
+
+    /*
+       ☝️ INDEX ONLY
+    */
+
+    if (
+
+        index &&
+
+        !middle &&
+
+        !ring &&
+
+        !pinky
+
+    ) {
+
+        return "draw";
+
+    }
+
+
+    /*
+       ✋ OPEN HAND
+    */
+
+    if (
+
+        index &&
+
+        middle &&
+
+        ring &&
+
+        pinky
+
+    ) {
+
+        return "pause";
+
+    }
+
+
+    /*
+       ✊ FIST
+    */
+
+    if (
+
+        !index &&
+
+        !middle &&
+
+        !ring &&
+
+        !pinky
+
+    ) {
+
+        return "clear";
+
+    }
+
+
+    /*
+       Partially open hand
+    */
+
+    return "pause";
+
+}
+
+
+/* =====================================================
+   UPDATE MAIN STATUS
+===================================================== */
+
+function updateMainStatus(
+    leftMode,
+    rightMode,
+    handCount
+) {
+
+
+    /*
+       If fist detected
+    */
+
+    if (
+
+        leftMode === "clear" ||
+
+        rightMode === "clear"
+
+    ) {
+
+
+        status.className =
+            "status clear";
+
+
+        status.innerHTML =
+            "✊ CLEAR / DELETE";
+
+
+        return;
+
+    }
+
+
+    /*
+       If at least one
+       hand is drawing
+    */
+
+    if (
+
+        leftMode === "draw" ||
+
+        rightMode === "draw"
+
+    ) {
+
+
+        status.className =
+            "status draw";
+
+
+        if (
+
+            leftMode === "draw" &&
+
+            rightMode === "draw"
+
+        ) {
+
+            status.innerHTML =
+                "☝️☝️ TWO HANDS DRAWING";
+
+        }
+
+        else {
+
+            status.innerHTML =
+                "☝️ DRAW MODE";
+
+        }
+
+
+        return;
+
+    }
+
+
+    /*
+       No drawing
+    */
+
+    if (
+        handCount > 0
+    ) {
+
+
+        status.className =
+            "status pause";
+
+
+        status.innerHTML =
+            "✋ PAUSE MODE";
+
+
+    }
+
+    else {
+
+
+        status.className =
+            "status pause";
+
+
+        status.innerHTML =
+            "👋 SHOW YOUR HAND";
+
+    }
+
+}
+
+
+/* =====================================================
+   UPDATE HAND BOX
+===================================================== */
+
+function updateHandBox(
+    side,
+    mode,
+    detected
+) {
+
+
+    let element;
+
+
+    if (
+        side === "Left"
+    ) {
+
+        element =
+            leftStatus;
+
+    }
+
+    else {
+
+        element =
+            rightStatus;
+
+    }
+
+
+    if (!detected) {
+
+
+        element.className =
+            "handBox";
+
+
+        if (
+            side === "Left"
+        ) {
+
+            element.innerHTML =
+                "👈 LEFT HAND: Not detected";
+
+        }
+
+        else {
+
+            element.innerHTML =
+                "👉 RIGHT HAND: Not detected";
+
+        }
+
+
+        return;
+
+    }
+
+
+    element.className =
+        "handBox active";
+
+
+    if (
+        mode === "draw"
+    ) {
+
+
+        if (
+            side === "Left"
+        ) {
+
+            element.innerHTML =
+                "👈 LEFT: ☝️ DRAW";
+
+        }
+
+        else {
+
+            element.innerHTML =
+                "👉 RIGHT: ☝️ DRAW";
+
+        }
+
+    }
+
+
+    else if (
+        mode === "pause"
+    ) {
+
+
+        if (
+            side === "Left"
+        ) {
+
+            element.innerHTML =
+                "👈 LEFT: ✋ PAUSE";
+
+        }
+
+        else {
+
+            element.innerHTML =
+                "👉 RIGHT: ✋ PAUSE";
+
+        }
+
+    }
+
+
+    else {
+
+
+        if (
+            side === "Left"
+        ) {
+
+            element.innerHTML =
+                "👈 LEFT: ✊ CLEAR";
+
+        }
+
+        else {
+
+            element.innerHTML =
+                "👉 RIGHT: ✊ CLEAR";
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   CLEAR
+===================================================== */
+
+function clearDrawing() {
+
+
+    drawCtx.clearRect(
+
+        0,
+
+        0,
+
+        drawCanvas.width,
+
+        drawCanvas.height
+
+    );
+
+
+    leftPreviousX =
+        null;
+
+
+    leftPreviousY =
+        null;
+
+
+    rightPreviousX =
+        null;
+
+
+    rightPreviousY =
+        null;
+
+
+    flowerCounter =
+        0;
+
+}
+
+
+/* =====================================================
+   SAVE
+===================================================== */
+
+function saveDrawing() {
+
+
+    const temp =
+        document.createElement(
+            "canvas"
+        );
+
+
+    temp.width =
+        drawCanvas.width;
+
+
+    temp.height =
+        drawCanvas.height;
+
+
+    const tempCtx =
+        temp.getContext(
+            "2d"
+        );
+
+
+    /*
+       Background
+    */
+
+    tempCtx.fillStyle =
+        "#080b16";
+
+
+    tempCtx.fillRect(
+
+        0,
+
+        0,
+
+        temp.width,
+
+        temp.height
+
+    );
+
+
+    /*
+       Drawing
+    */
+
+    tempCtx.drawImage(
+
+        drawCanvas,
+
+        0,
+
+        0
+
+    );
+
+
+    /*
+       Download
+    */
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.download =
+        "AirBloom_TwoHands.png";
+
+
+    link.href =
+        temp.toDataURL(
+            "image/png"
+        );
+
+
+    link.click();
+
+}
+
+
+/* =====================================================
+   PROCESS ONE HAND
+===================================================== */
+
+function processHand(
+
+    landmarks,
+
+    side
+
+) {
+
+
+    /*
+       Detect gesture
+    */
+
+    const mode =
+        detectGesture(
             landmarks
         );
 
 
     /*
-       ☝️ DRAW
+       INDEX
+    */
+
+    const index =
+        landmarks[8];
+
+
+    /*
+       Mirror X
+    */
+
+    const x =
+        (
+            1 -
+            index.x
+        )
+        *
+        drawCanvas.width;
+
+
+    const y =
+        index.y
+        *
+        drawCanvas.height;
+
+
+    /*
+       LEFT HAND
     */
 
     if (
-
-        fingers.index &&
-
-        !fingers.middle &&
-
-        !fingers.ring &&
-
-        !fingers.pinky
-
+        side === "Left"
     ) {
 
-        return "DRAW";
+
+        if (
+            mode === "draw"
+        ) {
+
+
+            /*
+               Connect previous
+               position
+            */
+
+            if (
+
+                leftPreviousX !== null &&
+
+                leftPreviousY !== null
+
+            ) {
+
+
+                drawConnection(
+
+                    leftPreviousX,
+
+                    leftPreviousY,
+
+                    x,
+
+                    y
+
+                );
+
+            }
+
+
+            /*
+               Flower
+            */
+
+            drawFlower(
+
+                x,
+
+                y,
+
+                "Left"
+
+            );
+
+
+            /*
+               Save position
+            */
+
+            leftPreviousX =
+                x;
+
+
+            leftPreviousY =
+                y;
+
+
+        }
+
+        else {
+
+
+            leftPreviousX =
+                null;
+
+
+            leftPreviousY =
+                null;
+
+        }
 
     }
 
 
     /*
-       ✋ PAUSE
+       RIGHT HAND
     */
 
-    if (
+    else {
 
-        fingers.index &&
 
-        fingers.middle &&
+        if (
+            mode === "draw"
+        ) {
 
-        fingers.ring &&
 
-        fingers.pinky
+            if (
 
-    ) {
+                rightPreviousX !== null &&
 
-        return "PAUSE";
+                rightPreviousY !== null
+
+            ) {
+
+
+                drawConnection(
+
+                    rightPreviousX,
+
+                    rightPreviousY,
+
+                    x,
+
+                    y
+
+                );
+
+            }
+
+
+            drawFlower(
+
+                x,
+
+                y,
+
+                "Right"
+
+            );
+
+
+            rightPreviousX =
+                x;
+
+
+            rightPreviousY =
+                y;
+
+
+        }
+
+        else {
+
+
+            rightPreviousX =
+                null;
+
+
+            rightPreviousY =
+                null;
+
+        }
 
     }
 
 
-    /*
-       ✊ CLEAR
-    */
-
-    if (
-
-        !fingers.index &&
-
-        !fingers.middle &&
-
-        !fingers.ring &&
-
-        !fingers.pinky
-
-    ) {
-
-        return "CLEAR";
-
-    }
-
-
-    return "PAUSE";
+    return mode;
 
 }
 
 
-
 /* =====================================================
-   DRAW BETWEEN POINTS
+   DRAW HAND SKELETON
 ===================================================== */
 
-function drawBetween(
+function drawHandSkeleton(
 
-    x1,
-    y1,
+    landmarks,
 
-    x2,
-    y2
+    side
 
 ) {
 
-    const dx =
-        x2 - x1;
+
+    /*
+       Connections
+    */
+
+    const connections = [
+
+        [0,1],
+        [1,2],
+        [2,3],
+        [3,4],
+
+        [0,5],
+        [5,6],
+        [6,7],
+        [7,8],
+
+        [5,9],
+        [9,10],
+        [10,11],
+        [11,12],
+
+        [9,13],
+        [13,14],
+        [14,15],
+        [15,16],
+
+        [13,17],
+        [17,18],
+        [18,19],
+        [19,20],
+
+        [0,17]
+
+    ];
 
 
-    const dy =
-        y2 - y1;
+    /*
+       Different skeleton
+       color for each hand
+    */
+
+    if (
+        side === "Left"
+    ) {
+
+        handCtx.strokeStyle =
+            "rgba(255,100,200,.55)";
+
+        handCtx.fillStyle =
+            "rgba(255,120,210,.9)";
+
+    }
+
+    else {
+
+        handCtx.strokeStyle =
+            "rgba(80,210,255,.55)";
+
+        handCtx.fillStyle =
+            "rgba(90,220,255,.9)";
+
+    }
 
 
-    const distance =
-        Math.sqrt(
-
-            dx * dx +
-            dy * dy
-
-        );
+    handCtx.lineWidth =
+        2;
 
 
-    const steps =
-        Math.max(
-
-            1,
-
-            Math.floor(
-                distance / 10
-            )
-
-        );
-
+    /*
+       Connections
+    */
 
     for (
+        const pair
+        of connections
+    ) {
 
+
+        const a =
+            pair[0];
+
+
+        const b =
+            pair[1];
+
+
+        const x1 =
+            (
+                1 -
+                landmarks[a].x
+            )
+            *
+            handCanvas.width;
+
+
+        const y1 =
+            landmarks[a].y
+            *
+            handCanvas.height;
+
+
+        const x2 =
+            (
+                1 -
+                landmarks[b].x
+            )
+            *
+            handCanvas.width;
+
+
+        const y2 =
+            landmarks[b].y
+            *
+            handCanvas.height;
+
+
+        handCtx.beginPath();
+
+
+        handCtx.moveTo(
+            x1,
+            y1
+        );
+
+
+        handCtx.lineTo(
+            x2,
+            y2
+        );
+
+
+        handCtx.stroke();
+
+    }
+
+
+    /*
+       Landmarks
+    */
+
+    for (
+        const point
+        of landmarks
+    ) {
+
+
+        const x =
+            (
+                1 -
+                point.x
+            )
+            *
+            handCanvas.width;
+
+
+        const y =
+            point.y
+            *
+            handCanvas.height;
+
+
+        handCtx.beginPath();
+
+
+        handCtx.arc(
+
+            x,
+
+            y,
+
+            3,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        handCtx.fill();
+
+    }
+
+}
+
+
+/* =====================================================
+   MEDIAPIPE RESULTS
+===================================================== */
+
+function onResults(
+    results
+) {
+
+
+    /*
+       Clear skeleton
+    */
+
+    handCtx.clearRect(
+
+        0,
+
+        0,
+
+        handCanvas.width,
+
+        handCanvas.height
+
+    );
+
+
+    /*
+       Reset statuses
+    */
+
+    updateHandBox(
+        "Left",
+        "pause",
+        false
+    );
+
+
+    updateHandBox(
+        "Right",
+        "pause",
+        false
+    );
+
+
+    /*
+       No hands
+    */
+
+    if (
+
+        !results.multiHandLandmarks ||
+
+        results.multiHandLandmarks.length === 0
+
+    ) {
+
+
+        updateMainStatus(
+            "pause",
+            "pause",
+            0
+        );
+
+
+        leftPreviousX =
+            null;
+
+
+        leftPreviousY =
+            null;
+
+
+        rightPreviousX =
+            null;
+
+
+        rightPreviousY =
+            null;
+
+
+        info.innerHTML =
+            "👋 No hand detected";
+
+
+        return;
+
+    }
+
+
+    let leftMode =
+        "pause";
+
+
+    let rightMode =
+        "pause";
+
+
+    let leftDetected =
+        false;
+
+
+    let rightDetected =
+        false;
+
+
+    /*
+       Process BOTH hands
+    */
+
+    for (
         let i = 0;
 
-        i <= steps;
+        i <
+        results.multiHandLandmarks.length;
 
         i++
 
     ) {
 
-        const t =
-            i / steps;
 
-
-        const x =
-            x1 +
-            dx * t;
-
-
-        const y =
-            y1 +
-            dy * t;
-
-
-        const size =
-            12 +
-            Math.random() * 10;
-
-
-        drawFlower(
-
-            x,
-            y,
-            size
-
-        );
-
-    }
-
-}
-
-
-
-/* =====================================================
-   CREATE MEDIAPIPE
-===================================================== */
-
-async function createHandLandmarker() {
-
-    try {
-
-        status.innerText =
-            "⏳ Loading hand detection...";
-
-
-        const vision =
-            await FilesetResolver
-                .forVisionTasks(
-
-                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
-
-                );
-
-
-        handLandmarker =
-            await HandLandmarker
-                .createFromOptions(
-
-                    vision,
-
-                    {
-
-                        baseOptions: {
-
-                            modelAssetPath:
-
-                            "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-
-                            delegate: "GPU"
-
-                        },
-
-
-                        runningMode:
-                            "VIDEO",
-
-
-                        numHands:
-                            1,
-
-
-                        minHandDetectionConfidence:
-                            0.5,
-
-
-                        minHandPresenceConfidence:
-                            0.5,
-
-
-                        minTrackingConfidence:
-                            0.5
-
-                    }
-
-                );
-
-
-        status.innerText =
-            "✅ Hand detection ready";
-
-
-        return true;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        status.innerText =
-            "❌ MediaPipe error";
-
-
-        return false;
-
-    }
-
-}
-
-
-
-/* =====================================================
-   START CAMERA
-===================================================== */
-
-async function startCamera() {
-
-    try {
-
-        status.innerText =
-            "📷 Requesting camera...";
-
-
-        const stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
-
-                    video: {
-
-                        width: {
-                            ideal: 1280
-                        },
-
-                        height: {
-                            ideal: 720
-                        }
-
-                    },
-
-                    audio: false
-
-                });
-
-
-        video.srcObject =
-            stream;
-
-
-        await video.play();
-
-
-        canvas.width =
-            video.videoWidth;
-
-
-        canvas.height =
-            video.videoHeight;
-
-
-        running = true;
-
-
-        status.innerText =
-            "🟢 LIVE — Show your hand";
-
-
-        predict();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        status.innerText =
-            "❌ Camera error: "
-            +
-            error.message;
-
-    }
-
-}
-
-
-
-/* =====================================================
-   PROCESS CAMERA
-===================================================== */
-
-async function predict() {
-
-    if (!running) {
-
-        return;
-
-    }
-
-
-    if (
-        video.readyState < 2
-    ) {
-
-        requestAnimationFrame(
-            predict
-        );
-
-        return;
-
-    }
-
-
-    const timestamp =
-        performance.now();
-
-
-    try {
-
-        const results =
-            handLandmarker
-                .detectForVideo(
-
-                    video,
-
-                    timestamp
-
-                );
+        const landmarks =
+            results.multiHandLandmarks[i];
 
 
         /*
-           NO HAND
+           Get LEFT / RIGHT
         */
+
+        let side =
+            "Right";
+
 
         if (
 
-            !results.landmarks ||
+            results.multiHandedness &&
 
-            results.landmarks.length === 0
+            results.multiHandedness[i]
 
         ) {
 
-            status.innerText =
-                "👋 Show your hand";
 
-
-            lastX = null;
-
-            lastY = null;
-
-            clearStartTime =
-                null;
-
-
-            clearProgress.style.width =
-                "0%";
+            side =
+                results
+                    .multiHandedness[i]
+                    .label;
 
         }
 
 
         /*
-           HAND DETECTED
+           Process hand
         */
+
+        const mode =
+            processHand(
+
+                landmarks,
+
+                side
+
+            );
+
+
+        /*
+           Draw skeleton
+        */
+
+        drawHandSkeleton(
+
+            landmarks,
+
+            side
+
+        );
+
+
+        /*
+           Save status
+        */
+
+        if (
+            side === "Left"
+        ) {
+
+
+            leftMode =
+                mode;
+
+
+            leftDetected =
+                true;
+
+        }
 
         else {
 
-            const landmarks =
-                results.landmarks[0];
 
+            rightMode =
+                mode;
 
-            const gesture =
-                detectGesture(
-                    landmarks
-                );
 
-
-            const index =
-                landmarks[8];
-
-
-            const x =
-                index.x *
-                canvas.width;
-
-
-            const y =
-                index.y *
-                canvas.height;
-
-
-
-            /* =========================================
-               DRAW
-            ========================================== */
-
-            if (
-                gesture === "DRAW"
-            ) {
-
-                status.innerText =
-                    "🌸 DRAW MODE";
-
-
-                clearStartTime =
-                    null;
-
-
-                clearProgress.style.width =
-                    "0%";
-
-
-                if (
-                    lastX === null
-                ) {
-
-                    lastX = x;
-
-                    lastY = y;
-
-                }
-
-
-                drawBetween(
-
-                    lastX,
-                    lastY,
-
-                    x,
-                    y
-
-                );
-
-
-                lastX = x;
-
-                lastY = y;
-
-            }
-
-
-
-            /* =========================================
-               PAUSE
-            ========================================== */
-
-            else if (
-                gesture === "PAUSE"
-            ) {
-
-                status.innerText =
-                    "✋ PAUSE — Not drawing";
-
-
-                lastX = null;
-
-                lastY = null;
-
-                clearStartTime =
-                    null;
-
-
-                clearProgress.style.width =
-                    "0%";
-
-            }
-
-
-
-            /* =========================================
-               CLEAR
-            ========================================== */
-
-            else if (
-                gesture === "CLEAR"
-            ) {
-
-                status.innerText =
-                    "✊ HOLD TO CLEAR";
-
-
-                lastX = null;
-
-                lastY = null;
-
-
-                if (
-                    clearStartTime === null
-                ) {
-
-                    clearStartTime =
-                        performance.now();
-
-                }
-
-
-                const elapsed =
-                    performance.now()
-                    -
-                    clearStartTime;
-
-
-                const progress =
-                    Math.min(
-
-                        elapsed /
-                        CLEAR_HOLD_TIME,
-
-                        1
-
-                    );
-
-
-                clearProgress.style.width =
-                    (
-                        progress * 100
-                    )
-                    + "%";
-
-
-                if (
-                    elapsed >=
-                    CLEAR_HOLD_TIME
-                ) {
-
-                    clearCanvas();
-
-
-                    clearStartTime =
-                        null;
-
-
-                    clearProgress.style.width =
-                        "0%";
-
-
-                    status.innerText =
-                        "🗑️ Canvas cleared";
-
-                }
-
-            }
+            rightDetected =
+                true;
 
         }
 
     }
 
+
+    /*
+       Update hand boxes
+    */
+
+    updateHandBox(
+
+        "Left",
+
+        leftMode,
+
+        leftDetected
+
+    );
+
+
+    updateHandBox(
+
+        "Right",
+
+        rightMode,
+
+        rightDetected
+
+    );
+
+
+    /*
+       Main status
+    */
+
+    updateMainStatus(
+
+        leftMode,
+
+        rightMode,
+
+        results.multiHandLandmarks.length
+
+    );
+
+
+    /*
+       CLEAR if fist
+    */
+
+    if (
+
+        leftMode === "clear" ||
+
+        rightMode === "clear"
+
+    ) {
+
+
+        const now =
+            Date.now();
+
+
+        if (
+
+            now -
+            lastClearTime
+            >
+            1000
+
+        ) {
+
+
+            clearDrawing();
+
+
+            lastClearTime =
+                now;
+
+        }
+
+    }
+
+
+    /*
+       Information
+    */
+
+    info.innerHTML =
+
+        "🖐️ " +
+
+        results.multiHandLandmarks.length +
+
+        " hand(s) detected";
+
+}
+
+
+/* =====================================================
+   MEDIAPIPE HANDS
+===================================================== */
+
+const hands =
+    new Hands({
+
+        locateFile:
+            (file) => {
+
+                return `
+https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}
+                `;
+
+            }
+
+    });
+
+
+/*
+   IMPORTANT:
+   TWO HANDS
+*/
+
+hands.setOptions({
+
+    maxNumHands:
+        2,
+
+
+    /*
+       0 = faster
+       1 = more accurate
+    */
+
+    modelComplexity:
+        0,
+
+
+    /*
+       Lower values allow
+       faster detection.
+    */
+
+    minDetectionConfidence:
+        0.50,
+
+
+    minTrackingConfidence:
+        0.50
+
+});
+
+
+/*
+   Results callback
+*/
+
+hands.onResults(
+    onResults
+);
+
+
+/* =====================================================
+   CAMERA
+===================================================== */
+
+const camera =
+    new Camera(
+
+        video,
+
+        {
+
+            onFrame:
+                async () => {
+
+                    await hands.send({
+
+                        image:
+                            video
+
+                    });
+
+                },
+
+
+            width:
+                1280,
+
+
+            height:
+                720
+
+        }
+
+    );
+
+
+/* =====================================================
+   START
+===================================================== */
+
+async function startAirBloom() {
+
+
+    try {
+
+
+        /*
+           Start camera
+        */
+
+        await camera.start();
+
+
+        /*
+           Hide loading
+        */
+
+        loading.style.display =
+            "none";
+
+
+        /*
+           Resize
+        */
+
+        resizeCanvas();
+
+
+        /*
+           Message
+        */
+
+        info.innerHTML =
+            "👋 Show one or two hands";
+
+
+    }
+
     catch (error) {
+
+
+        loading.innerHTML = `
+
+            ❌ Camera access denied.
+
+            <br><br>
+
+            Please allow camera access
+            in your browser.
+
+        `;
+
 
         console.error(
             error
@@ -1267,118 +2617,21 @@ async function predict() {
 
     }
 
-
-    requestAnimationFrame(
-        predict
-    );
-
 }
 
 
-
 /* =====================================================
-   START BUTTON
+   START AIRBLOOM
 ===================================================== */
 
-startButton.addEventListener(
-
-    "click",
-
-    async () => {
-
-        startButton.disabled =
-            true;
-
-
-        const ready =
-            await createHandLandmarker();
-
-
-        if (ready) {
-
-            await startCamera();
-
-        }
-
-
-        startButton.disabled =
-            false;
-
-    }
-
-);
-
-
-
-/* =====================================================
-   CLEAR BUTTON
-===================================================== */
-
-clearButton.addEventListener(
-
-    "click",
-
-    () => {
-
-        clearCanvas();
-
-
-        clearStartTime =
-            null;
-
-
-        clearProgress.style.width =
-            "0%";
-
-
-        status.innerText =
-            "🗑️ Canvas cleared";
-
-    }
-
-);
-
-
-
-/* =====================================================
-   SAVE BUTTON
-===================================================== */
-
-saveButton.addEventListener(
-
-    "click",
-
-    () => {
-
-        const link =
-            document.createElement(
-                "a"
-            );
-
-
-        link.download =
-            "AirBloom.png";
-
-
-        link.href =
-            canvas.toDataURL(
-                "image/png"
-            );
-
-
-        link.click();
-
-
-        status.innerText =
-            "💾 Drawing saved";
-
-    }
-
-);
+startAirBloom();
 
 
 </script>
 
+
 </body>
 
 </html>
+
+'''))
