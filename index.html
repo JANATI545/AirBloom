@@ -1,552 +1,601 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<title>🌸 AirBloom — Draw with Your Hands</title>
-
-<!-- MediaPipe Tasks Vision -->
-<script type="module">
-    import {
-        HandLandmarker,
-        FilesetResolver
-    } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22";
 
-    window.HandLandmarker = HandLandmarker;
-    window.FilesetResolver = FilesetResolver;
+    <meta charset="UTF-8">
 
-    window.dispatchEvent(new Event("mediapipe-ready"));
-</script>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
 
-<style>
+    <meta name="theme-color" content="#080b16">
 
-/* =========================================================
-   GLOBAL
-========================================================= */
+    <title>🌸 AirBloom - Draw with Your Hands</title>
 
-* {
-    box-sizing: border-box;
-}
 
-html,
-body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    min-height: 100%;
-}
+    <!-- =====================================================
+         MEDIAPIPE HANDS CLASSIC
+         IMPORTANT : PAS DE tasks-vision
+    ====================================================== -->
 
-body {
-    min-height: 100vh;
+    <script
+        src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js">
+    </script>
 
-    background:
-        radial-gradient(
-            circle at 10% 10%,
-            rgba(160, 70, 255, 0.30),
-            transparent 35%
-        ),
-        radial-gradient(
-            circle at 90% 90%,
-            rgba(0, 180, 255, 0.20),
-            transparent 35%
-        ),
-        #080b16;
+    <script
+        src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js">
+    </script>
 
-    color: white;
+    <script
+        src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js">
+    </script>
 
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
 
-    display: flex;
-    justify-content: center;
+    <style>
 
-    padding: 20px;
-}
+        * {
+            box-sizing: border-box;
+        }
 
 
-/* =========================================================
-   APP
-========================================================= */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+        }
 
-.app {
-    width: 100%;
-    max-width: 1200px;
-    text-align: center;
-}
 
+        body {
 
-/* =========================================================
-   TITLE
-========================================================= */
+            background:
+                radial-gradient(
+                    circle at 10% 10%,
+                    rgba(157, 78, 221, 0.35),
+                    transparent 35%
+                ),
 
-h1 {
-    margin: 5px 0 4px;
+                radial-gradient(
+                    circle at 90% 90%,
+                    rgba(0, 187, 249, 0.25),
+                    transparent 35%
+                ),
 
-    font-size: clamp(32px, 5vw, 52px);
+                #080b16;
 
-    background:
-        linear-gradient(
-            90deg,
-            #ff79c8,
-            #c69cff,
-            #65d9ff
-        );
+            color: white;
 
-    -webkit-background-clip: text;
-    background-clip: text;
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
 
-    -webkit-text-fill-color: transparent;
-}
+            min-height: 100vh;
 
-.subtitle {
-    color: #bfc1d4;
-    margin-bottom: 20px;
-    font-size: 15px;
-}
+            display: flex;
 
+            justify-content: center;
 
-/* =========================================================
-   CAMERA STAGE
-========================================================= */
+            align-items: center;
 
-.stage {
-    position: relative;
+            padding: 20px;
+        }
 
-    width: 100%;
-    max-width: 1100px;
 
-    margin: auto;
+        .app {
 
-    background: #000;
+            width: 100%;
 
-    border-radius: 25px;
+            max-width: 1150px;
 
-    overflow: hidden;
+            text-align: center;
+        }
 
-    box-shadow:
-        0 0 50px rgba(160, 90, 255, 0.25);
 
-    aspect-ratio: 16 / 9;
-}
+        /* =====================================================
+           TITLE
+        ====================================================== */
 
+        h1 {
 
-/* CAMERA */
+            margin: 0;
 
-#video {
-    position: absolute;
+            font-size: clamp(
+                32px,
+                5vw,
+                52px
+            );
 
-    left: 0;
-    top: 0;
+            background:
+                linear-gradient(
+                    90deg,
+                    #ff69b4,
+                    #c77dff,
+                    #67d9ff
+                );
 
-    width: 100%;
-    height: 100%;
+            -webkit-background-clip: text;
 
-    object-fit: cover;
+            -webkit-text-fill-color: transparent;
+        }
 
-    transform: scaleX(-1);
 
-    background: #000;
-}
+        .subtitle {
 
+            margin-top: 8px;
 
-/* DRAWING */
+            margin-bottom: 20px;
 
-#drawCanvas,
-#handCanvas {
+            color: #bdbdd0;
 
-    position: absolute;
+            font-size: 16px;
+        }
 
-    left: 0;
-    top: 0;
 
-    width: 100%;
-    height: 100%;
+        /* =====================================================
+           CAMERA STAGE
+        ====================================================== */
 
-    pointer-events: none;
-}
+        .stage {
 
+            position: relative;
 
-/* HAND CANVAS ABOVE DRAWING */
+            width: 100%;
 
-#handCanvas {
-    z-index: 3;
-}
+            max-width: 1050px;
 
-#drawCanvas {
-    z-index: 2;
-}
+            margin: auto;
 
+            overflow: hidden;
 
-/* =========================================================
-   LOADING
-========================================================= */
+            border-radius: 25px;
 
-#loading {
+            background: #000;
 
-    position: absolute;
+            box-shadow:
+                0 0 50px
+                rgba(150, 80, 255, 0.28);
 
-    inset: 0;
+            aspect-ratio: 16 / 9;
+        }
 
-    z-index: 10;
 
-    display: flex;
+        #video {
 
-    align-items: center;
-    justify-content: center;
+            position: absolute;
 
-    flex-direction: column;
+            inset: 0;
 
-    gap: 12px;
+            width: 100%;
 
-    background:
-        rgba(5, 5, 15, 0.92);
+            height: 100%;
 
-    font-size: 18px;
+            object-fit: cover;
 
-    font-weight: bold;
-}
+            transform: scaleX(-1);
 
-.loader {
-    width: 42px;
-    height: 42px;
+            display: block;
+        }
 
-    border-radius: 50%;
 
-    border: 4px solid rgba(255,255,255,0.15);
+        #drawCanvas,
+        #handCanvas {
 
-    border-top-color: #ff8bd4;
+            position: absolute;
 
-    animation:
-        spin 0.8s linear infinite;
-}
+            left: 0;
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
+            top: 0;
 
+            width: 100%;
 
-/* =========================================================
-   STATUS
-========================================================= */
+            height: 100%;
 
-.status {
+            pointer-events: none;
+        }
 
-    display: inline-block;
 
-    margin: 18px auto 12px;
+        /* =====================================================
+           LOADING
+        ====================================================== */
 
-    padding: 11px 25px;
+        #loading {
 
-    border-radius: 30px;
+            position: absolute;
 
-    background:
-        rgba(255,255,255,0.07);
+            inset: 0;
 
-    border:
-        1px solid
-        rgba(255,255,255,0.12);
+            z-index: 20;
 
-    font-weight: bold;
+            display: flex;
 
-    font-size: 17px;
-}
+            justify-content: center;
 
-.status.draw {
-    color: #ff8bd4;
-}
+            align-items: center;
 
-.status.pause {
-    color: #ffd166;
-}
+            flex-direction: column;
 
-.status.clear {
-    color: #ff7070;
-}
+            gap: 12px;
 
-.status.ready {
-    color: #66f2c2;
-}
+            background:
+                rgba(5, 5, 15, 0.92);
 
+            font-size: 19px;
 
-/* =========================================================
-   HAND STATUS
-========================================================= */
+            font-weight: bold;
+        }
 
-.hands-status {
 
-    display: flex;
+        .loader {
 
-    justify-content: center;
+            width: 42px;
 
-    flex-wrap: wrap;
+            height: 42px;
 
-    gap: 12px;
+            border-radius: 50%;
 
-    margin-bottom: 14px;
-}
+            border: 4px solid
+                rgba(255,255,255,0.15);
 
-.hand-box {
+            border-top-color:
+                #ff69b4;
 
-    min-width: 190px;
+            animation:
+                spin 0.8s linear infinite;
+        }
 
-    padding: 10px 18px;
 
-    border-radius: 15px;
+        @keyframes spin {
 
-    background:
-        rgba(255,255,255,0.055);
+            to {
+                transform: rotate(360deg);
+            }
 
-    border:
-        1px solid
-        rgba(255,255,255,0.09);
+        }
 
-    color: #9295a8;
 
-    transition: 0.2s;
-}
+        /* =====================================================
+           STATUS
+        ====================================================== */
 
-.hand-box.active {
-    color: white;
+        .status {
 
-    background:
-        rgba(255,255,255,0.10);
-}
+            display: inline-block;
 
+            margin-top: 18px;
 
-/* =========================================================
-   CONTROLS
-========================================================= */
+            padding: 12px 25px;
 
-.controls {
+            border-radius: 30px;
 
-    display: flex;
+            background:
+                rgba(255,255,255,0.07);
 
-    justify-content: center;
+            border:
+                1px solid
+                rgba(255,255,255,0.12);
 
-    flex-wrap: wrap;
+            font-size: 17px;
 
-    gap: 12px;
+            font-weight: bold;
+        }
 
-    margin-top: 12px;
-}
 
-button {
+        .status.draw {
 
-    border: none;
+            color: #ff72c6;
 
-    padding: 13px 24px;
+        }
 
-    border-radius: 25px;
 
-    color: white;
+        .status.pause {
 
-    font-weight: bold;
+            color: #ffd166;
 
-    font-size: 15px;
+        }
 
-    cursor: pointer;
 
-    transition:
-        transform 0.2s,
-        box-shadow 0.2s;
+        .status.clear {
 
-    touch-action: manipulation;
-}
+            color: #ff6b6b;
 
-button:hover {
-    transform: translateY(-2px);
+        }
 
-    box-shadow:
-        0 8px 25px
-        rgba(160,100,255,0.3);
-}
 
-button:active {
-    transform: scale(0.97);
-}
+        .status.wait {
 
-.clear {
-    background:
-        linear-gradient(
-            135deg,
-            #ff416c,
-            #ff4b2b
-        );
-}
+            color: #9da4c5;
 
-.save {
-    background:
-        linear-gradient(
-            135deg,
-            #00b894,
-            #00cec9
-        );
-}
+        }
 
 
-/* =========================================================
-   INSTRUCTIONS
-========================================================= */
+        /* =====================================================
+           HAND STATUS
+        ====================================================== */
 
-.instructions {
+        .handsStatus {
 
-    display: flex;
+            display: flex;
 
-    justify-content: center;
+            justify-content: center;
 
-    flex-wrap: wrap;
+            gap: 12px;
 
-    gap: 10px;
+            flex-wrap: wrap;
 
-    margin-top: 22px;
-}
+            margin-top: 15px;
+        }
 
-.gesture {
 
-    min-width: 160px;
+        .handBox {
 
-    padding: 12px 18px;
+            min-width: 190px;
 
-    border-radius: 15px;
+            padding: 10px 18px;
 
-    background:
-        rgba(255,255,255,0.055);
+            border-radius: 15px;
 
-    border:
-        1px solid
-        rgba(255,255,255,0.08);
-}
+            background:
+                rgba(255,255,255,0.05);
 
-.gesture-icon {
-    display: block;
-    font-size: 26px;
-    margin-bottom: 4px;
-}
+            border:
+                1px solid
+                rgba(255,255,255,0.08);
 
-.gesture small {
-    display: block;
+            color: #85889c;
 
-    color: #9699aa;
+            transition: 0.2s;
+        }
 
-    margin-top: 4px;
-}
 
+        .handBox.active {
 
-/* =========================================================
-   INFO
-========================================================= */
+            color: white;
 
-#info {
+            background:
+                rgba(255,255,255,0.09);
+        }
 
-    margin-top: 14px;
 
-    color: #888c9f;
+        /* =====================================================
+           BUTTONS
+        ====================================================== */
 
-    font-size: 13px;
-}
+        .controls {
 
+            display: flex;
 
-/* =========================================================
-   MOBILE
-========================================================= */
+            justify-content: center;
 
-@media (max-width: 700px) {
+            flex-wrap: wrap;
 
-    body {
-        padding: 8px;
-    }
+            gap: 12px;
 
-    .app {
-        width: 100%;
-    }
+            margin-top: 18px;
+        }
 
-    h1 {
-        font-size: 34px;
-    }
 
-    .subtitle {
-        font-size: 13px;
-        margin-bottom: 12px;
-    }
+        button {
 
-    .stage {
-        border-radius: 17px;
+            border: none;
 
-        /*
-           On mobile the camera
-           is a little taller.
-        */
-        aspect-ratio: 4 / 3;
-    }
+            padding: 13px 24px;
 
-    .status {
-        margin: 12px auto 10px;
+            border-radius: 25px;
 
-        font-size: 14px;
+            color: white;
 
-        padding: 9px 17px;
-    }
+            font-size: 15px;
 
-    .hand-box {
-        min-width: 150px;
+            font-weight: bold;
 
-        font-size: 13px;
+            cursor: pointer;
 
-        padding: 9px 12px;
-    }
+            transition: 0.2s;
 
-    button {
-        padding: 11px 18px;
-        font-size: 14px;
-    }
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    .gesture {
-        min-width: 140px;
-        flex: 1;
-    }
 
-}
+        button:active {
 
+            transform: scale(0.96);
 
-/* =========================================================
-   VERY SMALL PHONES
-========================================================= */
+        }
 
-@media (max-width: 400px) {
 
-    body {
-        padding: 5px;
-    }
+        .clear {
 
-    h1 {
-        font-size: 29px;
-    }
+            background:
+                linear-gradient(
+                    135deg,
+                    #ff416c,
+                    #ff4b2b
+                );
+        }
 
-    .gesture {
-        min-width: 120px;
-    }
 
-    .gesture small {
-        font-size: 11px;
-    }
-}
+        .save {
 
-</style>
+            background:
+                linear-gradient(
+                    135deg,
+                    #00b894,
+                    #00cec9
+                );
+        }
+
+
+        /* =====================================================
+           INSTRUCTIONS
+        ====================================================== */
+
+        .instructions {
+
+            display: flex;
+
+            justify-content: center;
+
+            flex-wrap: wrap;
+
+            gap: 12px;
+
+            margin-top: 22px;
+        }
+
+
+        .gesture {
+
+            min-width: 165px;
+
+            padding: 13px 18px;
+
+            border-radius: 15px;
+
+            background:
+                rgba(255,255,255,0.05);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.08);
+        }
+
+
+        .gesture span {
+
+            font-size: 27px;
+
+            display: block;
+
+            margin-bottom: 5px;
+        }
+
+
+        .gesture small {
+
+            display: block;
+
+            margin-top: 5px;
+
+            color: #9da0b5;
+        }
+
+
+        #info {
+
+            margin-top: 15px;
+
+            color: #888ca2;
+
+            font-size: 14px;
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ====================================================== */
+
+        @media (max-width: 700px) {
+
+            body {
+
+                padding: 10px;
+
+                align-items: flex-start;
+            }
+
+
+            .app {
+
+                margin-top: 12px;
+            }
+
+
+            h1 {
+
+                font-size: 35px;
+            }
+
+
+            .subtitle {
+
+                font-size: 14px;
+
+                margin-bottom: 14px;
+            }
+
+
+            .stage {
+
+                border-radius: 18px;
+
+                aspect-ratio: 4 / 3;
+            }
+
+
+            .status {
+
+                margin-top: 12px;
+
+                padding: 10px 18px;
+
+                font-size: 15px;
+            }
+
+
+            .handBox {
+
+                min-width: 145px;
+
+                font-size: 13px;
+
+                padding: 9px 12px;
+            }
+
+
+            .gesture {
+
+                min-width: 100px;
+
+                flex: 1;
+            }
+
+
+            .gesture span {
+
+                font-size: 23px;
+            }
+
+
+            button {
+
+                padding: 12px 20px;
+            }
+
+        }
+
+    </style>
+
 </head>
 
 
 <body>
 
+
 <div class="app">
 
-    <h1>🌸 AirBloom</h1>
+
+    <!-- =====================================================
+         TITLE
+    ====================================================== -->
+
+    <h1>
+        🌸 AirBloom
+    </h1>
+
 
     <div class="subtitle">
         Draw beautiful flowers in the air with your hands
@@ -555,17 +604,22 @@ button:active {
 
     <!-- =====================================================
          CAMERA
-    ===================================================== -->
+    ====================================================== -->
 
     <div class="stage">
+
 
         <div id="loading">
 
             <div class="loader"></div>
 
-            <div id="loadingText">
-                🌸 AirBloom is loading...
+            <div>
+                🌸 Starting AirBloom...
             </div>
+
+            <small>
+                Loading camera & hand detection
+            </small>
 
         </div>
 
@@ -573,8 +627,8 @@ button:active {
         <video
             id="video"
             autoplay
-            muted
-            playsinline>
+            playsinline
+            muted>
         </video>
 
 
@@ -587,31 +641,32 @@ button:active {
             id="handCanvas">
         </canvas>
 
+
     </div>
 
 
     <!-- =====================================================
          MAIN STATUS
-    ===================================================== -->
+    ====================================================== -->
 
     <div
         id="status"
-        class="status pause">
+        class="status wait">
 
         ⏳ Starting...
-
     </div>
 
 
     <!-- =====================================================
          HAND STATUS
-    ===================================================== -->
+    ====================================================== -->
 
-    <div class="hands-status">
+    <div class="handsStatus">
+
 
         <div
             id="leftStatus"
-            class="hand-box">
+            class="handBox">
 
             👈 LEFT HAND:
             Not detected
@@ -621,25 +676,27 @@ button:active {
 
         <div
             id="rightStatus"
-            class="hand-box">
+            class="handBox">
 
             👉 RIGHT HAND:
             Not detected
 
         </div>
 
+
     </div>
 
 
     <!-- =====================================================
          BUTTONS
-    ===================================================== -->
+    ====================================================== -->
 
     <div class="controls">
 
+
         <button
             class="clear"
-            id="clearBtn">
+            onclick="clearDrawing()">
 
             🗑️ Clear
 
@@ -648,24 +705,26 @@ button:active {
 
         <button
             class="save"
-            id="saveBtn">
+            onclick="saveDrawing()">
 
             💾 Save Drawing
 
         </button>
+
 
     </div>
 
 
     <!-- =====================================================
          INSTRUCTIONS
-    ===================================================== -->
+    ====================================================== -->
 
     <div class="instructions">
 
+
         <div class="gesture">
 
-            <span class="gesture-icon">☝️</span>
+            <span>☝️</span>
 
             <b>DRAW</b>
 
@@ -678,7 +737,7 @@ button:active {
 
         <div class="gesture">
 
-            <span class="gesture-icon">✋</span>
+            <span>✋</span>
 
             <b>PAUSE</b>
 
@@ -691,7 +750,7 @@ button:active {
 
         <div class="gesture">
 
-            <span class="gesture-icon">✊</span>
+            <span>✊</span>
 
             <b>CLEAR</b>
 
@@ -701,21 +760,24 @@ button:active {
 
         </div>
 
+
     </div>
 
 
     <div id="info">
-        Preparing camera...
+        Initializing...
     </div>
+
 
 </div>
 
 
+
 <script>
 
-/* =========================================================
+/* ==========================================================
    ELEMENTS
-========================================================= */
+========================================================== */
 
 const video =
     document.getElementById("video");
@@ -732,14 +794,11 @@ const drawCtx =
 const handCtx =
     handCanvas.getContext("2d");
 
-const status =
-    document.getElementById("status");
-
 const loading =
     document.getElementById("loading");
 
-const loadingText =
-    document.getElementById("loadingText");
+const status =
+    document.getElementById("status");
 
 const info =
     document.getElementById("info");
@@ -750,64 +809,28 @@ const leftStatus =
 const rightStatus =
     document.getElementById("rightStatus");
 
-const clearBtn =
-    document.getElementById("clearBtn");
 
-const saveBtn =
-    document.getElementById("saveBtn");
-
-
-/* =========================================================
+/* ==========================================================
    VARIABLES
-========================================================= */
+========================================================== */
 
-let handLandmarker = null;
+let leftPreviousX = null;
+let leftPreviousY = null;
 
-let cameraStream = null;
+let rightPreviousX = null;
+let rightPreviousY = null;
 
-let running = false;
-
-let lastVideoTime = -1;
-
-
-/*
-   Previous drawing position
-   for each hand.
-*/
-
-let leftPrevious = null;
-
-let rightPrevious = null;
-
-
-/*
-   Clear protection.
-*/
+let flowerCounter = 0;
 
 let lastClearTime = 0;
 
 
-/*
-   Flowers.
-*/
-
-let flowerCounter = 0;
-
-
-/*
-   Prevent repeated camera frames
-   from creating too many flowers.
-*/
-
-let lastDrawTimeLeft = 0;
-let lastDrawTimeRight = 0;
-
-
-/* =========================================================
-   COLORS
-========================================================= */
+/* ==========================================================
+   DRAWING COLORS
+========================================================== */
 
 const colors = [
+
     "#ff69b4",
     "#ff9de2",
     "#c77dff",
@@ -816,17 +839,19 @@ const colors = [
     "#00f5d4",
     "#fee440",
     "#ff7b00"
+
 ];
 
 
-/* =========================================================
+/* ==========================================================
    CANVAS
-========================================================= */
+========================================================== */
 
 function resizeCanvas() {
 
     const rect =
         video.getBoundingClientRect();
+
 
     if (
         rect.width <= 0 ||
@@ -835,61 +860,54 @@ function resizeCanvas() {
         return;
     }
 
+
     /*
-       Use devicePixelRatio
-       for sharper drawings.
+       Use devicePixelRatio for
+       sharper drawing on phones.
     */
 
-    const dpr =
+    const ratio =
         Math.min(
             window.devicePixelRatio || 1,
             2
         );
 
+
     drawCanvas.width =
-        Math.round(rect.width * dpr);
+        rect.width * ratio;
 
     drawCanvas.height =
-        Math.round(rect.height * dpr);
+        rect.height * ratio;
+
 
     handCanvas.width =
-        Math.round(rect.width * dpr);
+        rect.width * ratio;
 
     handCanvas.height =
-        Math.round(rect.height * dpr);
-
-
-    drawCanvas.style.width =
-        rect.width + "px";
-
-    drawCanvas.style.height =
-        rect.height + "px";
-
-    handCanvas.style.width =
-        rect.width + "px";
-
-    handCanvas.style.height =
-        rect.height + "px";
+        rect.height * ratio;
 
 
     drawCtx.setTransform(
-        dpr,
+        ratio,
         0,
         0,
-        dpr,
+        ratio,
         0,
         0
     );
 
+
     handCtx.setTransform(
-        dpr,
+        ratio,
         0,
         0,
-        dpr,
+        ratio,
         0,
         0
     );
+
 }
+
 
 window.addEventListener(
     "resize",
@@ -897,52 +915,30 @@ window.addEventListener(
 );
 
 
-/* =========================================================
+/* ==========================================================
    GET DISPLAY SIZE
-========================================================= */
+========================================================== */
 
 function getDisplaySize() {
 
     const rect =
         video.getBoundingClientRect();
 
+
     return {
+
         width: rect.width,
+
         height: rect.height
+
     };
+
 }
 
 
-/* =========================================================
-   CONVERT LANDMARK TO SCREEN
-========================================================= */
-
-function landmarkToScreen(point) {
-
-    const size =
-        getDisplaySize();
-
-    return {
-
-        /*
-           Camera is mirrored,
-           therefore X is reversed.
-        */
-
-        x:
-            (1 - point.x)
-            * size.width,
-
-        y:
-            point.y
-            * size.height
-    };
-}
-
-
-/* =========================================================
+/* ==========================================================
    DISTANCE
-========================================================= */
+========================================================== */
 
 function distance(a, b) {
 
@@ -953,22 +949,22 @@ function distance(a, b) {
         a.y - b.y;
 
     return Math.sqrt(
-        dx * dx +
-        dy * dy
+        dx * dx + dy * dy
     );
+
 }
 
 
-/* =========================================================
+/* ==========================================================
    FINGER DETECTION
-========================================================= */
+========================================================== */
 
 /*
-   This version uses the wrist
-   and PIP distance.
+   More stable than only checking Y.
 
-   It is more stable than simply
-   checking Y coordinates.
+   We compare the distance from
+   fingertip to wrist against
+   the PIP joint.
 */
 
 function isFingerExtended(
@@ -1004,48 +1000,15 @@ function isFingerExtended(
         tipDistance >
         pipDistance * 1.12
     );
+
 }
 
 
-/* =========================================================
-   THUMB
-========================================================= */
-
-function isThumbExtended(
-    landmarks
-) {
-
-    const wrist =
-        landmarks[0];
-
-    const thumbTip =
-        landmarks[4];
-
-    const thumbIP =
-        landmarks[3];
-
-
-    return (
-        distance(
-            thumbTip,
-            wrist
-        )
-        >
-        distance(
-            thumbIP,
-            wrist
-        ) * 1.08
-    );
-}
-
-
-/* =========================================================
+/* ==========================================================
    GESTURE
-========================================================= */
+========================================================== */
 
-function detectGesture(
-    landmarks
-) {
+function detectGesture(landmarks) {
 
     const index =
         isFingerExtended(
@@ -1076,15 +1039,6 @@ function detectGesture(
         );
 
 
-    const extendedCount =
-        [
-            index,
-            middle,
-            ring,
-            pinky
-        ].filter(Boolean).length;
-
-
     /*
        INDEX ONLY
     */
@@ -1095,7 +1049,9 @@ function detectGesture(
         !ring &&
         !pinky
     ) {
+
         return "draw";
+
     }
 
 
@@ -1104,9 +1060,14 @@ function detectGesture(
     */
 
     if (
-        extendedCount >= 4
+        index &&
+        middle &&
+        ring &&
+        pinky
     ) {
+
         return "pause";
+
     }
 
 
@@ -1115,24 +1076,30 @@ function detectGesture(
     */
 
     if (
-        extendedCount === 0
+        !index &&
+        !middle &&
+        !ring &&
+        !pinky
     ) {
+
         return "clear";
+
     }
 
 
     /*
-       Anything between
-       is treated as pause.
+       Ambiguous gesture
+       = pause for safety
     */
 
     return "pause";
+
 }
 
 
-/* =========================================================
+/* ==========================================================
    FLOWER
-========================================================= */
+========================================================== */
 
 function drawFlower(
     x,
@@ -1142,24 +1109,20 @@ function drawFlower(
 
     let color;
 
+
     if (side === "Left") {
 
-        color =
-            "#ff72c6";
+        color = "#ff72c6";
 
     } else {
 
-        color =
-            "#67d9ff";
+        color = "#67d9ff";
+
     }
 
 
-    /*
-       Occasionally change color.
-    */
-
     if (
-        flowerCounter % 5 === 0
+        flowerCounter % 6 === 0
     ) {
 
         color =
@@ -1167,6 +1130,7 @@ function drawFlower(
                 flowerCounter %
                 colors.length
             ];
+
     }
 
 
@@ -1174,21 +1138,18 @@ function drawFlower(
 
 
     const size =
-        5.5 +
+        6 +
         Math.random() * 6;
 
 
     drawCtx.save();
+
 
     drawCtx.translate(
         x,
         y
     );
 
-
-    /*
-       Glow
-    */
 
     drawCtx.shadowBlur =
         14;
@@ -1198,7 +1159,7 @@ function drawFlower(
 
 
     /*
-       Petals
+       PETALS
     */
 
     for (
@@ -1215,22 +1176,24 @@ function drawFlower(
 
 
         const px =
-            Math.cos(angle)
-            * size;
+            Math.cos(angle) *
+            size;
 
 
         const py =
-            Math.sin(angle)
-            * size;
+            Math.sin(angle) *
+            size;
 
 
         drawCtx.beginPath();
 
+
         drawCtx.fillStyle =
             color;
 
+
         drawCtx.globalAlpha =
-            0.82;
+            0.85;
 
 
         drawCtx.arc(
@@ -1243,17 +1206,20 @@ function drawFlower(
 
 
         drawCtx.fill();
+
     }
 
 
     /*
-       Center
+       CENTER
     */
 
     drawCtx.beginPath();
 
+
     drawCtx.fillStyle =
         "#fff3a3";
+
 
     drawCtx.globalAlpha =
         1;
@@ -1262,7 +1228,7 @@ function drawFlower(
     drawCtx.arc(
         0,
         0,
-        size * 0.43,
+        size * 0.42,
         0,
         Math.PI * 2
     );
@@ -1272,51 +1238,55 @@ function drawFlower(
 
 
     /*
-       Sparkle
+       SPARKLE
     */
 
     if (
-        flowerCounter % 3 === 0
+        flowerCounter % 4 === 0
     ) {
 
         drawCtx.fillStyle =
             "white";
 
         drawCtx.font =
-            "14px Arial";
+            "15px Arial";
 
         drawCtx.fillText(
             "✦",
             size + 5,
             -size - 5
         );
+
     }
 
 
     drawCtx.restore();
+
 }
 
 
-/* =========================================================
+/* ==========================================================
    CONNECTION
-========================================================= */
+========================================================== */
 
 function drawConnection(
     x1,
     y1,
     x2,
-    y2,
-    side
+    y2
 ) {
 
     drawCtx.save();
 
+
     drawCtx.beginPath();
+
 
     drawCtx.moveTo(
         x1,
         y1
     );
+
 
     drawCtx.lineTo(
         x2,
@@ -1324,16 +1294,8 @@ function drawConnection(
     );
 
 
-    if (side === "Left") {
-
-        drawCtx.strokeStyle =
-            "rgba(255,110,200,0.20)";
-
-    } else {
-
-        drawCtx.strokeStyle =
-            "rgba(90,210,255,0.20)";
-    }
+    drawCtx.strokeStyle =
+        "rgba(255,255,255,0.18)";
 
 
     drawCtx.lineWidth =
@@ -1342,45 +1304,169 @@ function drawConnection(
 
     drawCtx.stroke();
 
+
     drawCtx.restore();
+
 }
 
 
-/* =========================================================
-   DRAW HAND SKELETON
-========================================================= */
+/* ==========================================================
+   PROCESS HAND
+========================================================== */
 
-const connections = [
+function processHand(
+    landmarks,
+    side
+) {
 
-    [0,1],
-    [1,2],
-    [2,3],
-    [3,4],
+    const mode =
+        detectGesture(
+            landmarks
+        );
 
-    [0,5],
-    [5,6],
-    [6,7],
-    [7,8],
 
-    [5,9],
-    [9,10],
-    [10,11],
-    [11,12],
+    /*
+       INDEX TIP
+    */
 
-    [9,13],
-    [13,14],
-    [14,15],
-    [15,16],
+    const index =
+        landmarks[8];
 
-    [13,17],
-    [17,18],
-    [18,19],
-    [19,20],
 
-    [0,17]
+    const size =
+        getDisplaySize();
 
-];
 
+    /*
+       Mirror camera
+    */
+
+    const x =
+        (1 - index.x) *
+        size.width;
+
+
+    const y =
+        index.y *
+        size.height;
+
+
+    /*
+       LEFT
+    */
+
+    if (
+        side === "Left"
+    ) {
+
+        if (
+            mode === "draw"
+        ) {
+
+            if (
+                leftPreviousX !== null &&
+                leftPreviousY !== null
+            ) {
+
+                drawConnection(
+                    leftPreviousX,
+                    leftPreviousY,
+                    x,
+                    y
+                );
+
+            }
+
+
+            drawFlower(
+                x,
+                y,
+                "Left"
+            );
+
+
+            leftPreviousX =
+                x;
+
+            leftPreviousY =
+                y;
+
+        }
+
+        else {
+
+            leftPreviousX =
+                null;
+
+            leftPreviousY =
+                null;
+
+        }
+
+    }
+
+
+    /*
+       RIGHT
+    */
+
+    else {
+
+        if (
+            mode === "draw"
+        ) {
+
+            if (
+                rightPreviousX !== null &&
+                rightPreviousY !== null
+            ) {
+
+                drawConnection(
+                    rightPreviousX,
+                    rightPreviousY,
+                    x,
+                    y
+                );
+
+            }
+
+
+            drawFlower(
+                x,
+                y,
+                "Right"
+            );
+
+
+            rightPreviousX =
+                x;
+
+            rightPreviousY =
+                y;
+
+        }
+
+        else {
+
+            rightPreviousX =
+                null;
+
+            rightPreviousY =
+                null;
+
+        }
+
+    }
+
+
+    return mode;
+
+}
+
+
+/* ==========================================================
+   HAND SKELETON
+========================================================== */
 
 function drawHandSkeleton(
     landmarks,
@@ -1391,21 +1477,58 @@ function drawHandSkeleton(
         getDisplaySize();
 
 
-    if (side === "Left") {
+    const connections = [
+
+        [0,1],
+        [1,2],
+        [2,3],
+        [3,4],
+
+        [0,5],
+        [5,6],
+        [6,7],
+        [7,8],
+
+        [5,9],
+        [9,10],
+        [10,11],
+        [11,12],
+
+        [9,13],
+        [13,14],
+        [14,15],
+        [15,16],
+
+        [13,17],
+        [17,18],
+        [18,19],
+        [19,20],
+
+        [0,17]
+
+    ];
+
+
+    if (
+        side === "Left"
+    ) {
 
         handCtx.strokeStyle =
-            "rgba(255,100,200,0.50)";
+            "rgba(255,100,200,0.65)";
 
         handCtx.fillStyle =
-            "rgba(255,120,210,0.90)";
+            "rgba(255,120,210,0.95)";
 
-    } else {
+    }
+
+    else {
 
         handCtx.strokeStyle =
-            "rgba(80,210,255,0.50)";
+            "rgba(80,210,255,0.65)";
 
         handCtx.fillStyle =
-            "rgba(90,220,255,0.90)";
+            "rgba(90,220,255,0.95)";
+
     }
 
 
@@ -1414,74 +1537,195 @@ function drawHandSkeleton(
 
 
     /*
-       Lines
+       LINES
     */
 
     for (
-        const pair of connections
+        const pair
+        of connections
     ) {
 
-        const p1 =
-            landmarkToScreen(
-                landmarks[pair[0]]
-            );
+        const a =
+            landmarks[pair[0]];
 
-        const p2 =
-            landmarkToScreen(
-                landmarks[pair[1]]
-            );
+        const b =
+            landmarks[pair[1]];
+
+
+        const x1 =
+            (1 - a.x) *
+            size.width;
+
+        const y1 =
+            a.y *
+            size.height;
+
+
+        const x2 =
+            (1 - b.x) *
+            size.width;
+
+        const y2 =
+            b.y *
+            size.height;
 
 
         handCtx.beginPath();
 
+
         handCtx.moveTo(
-            p1.x,
-            p1.y
+            x1,
+            y1
         );
+
 
         handCtx.lineTo(
-            p2.x,
-            p2.y
+            x2,
+            y2
         );
 
+
         handCtx.stroke();
+
     }
 
 
     /*
-       Points
+       POINTS
     */
 
     for (
-        const point of landmarks
+        const point
+        of landmarks
     ) {
 
-        const p =
-            landmarkToScreen(
-                point
-            );
+        const x =
+            (1 - point.x) *
+            size.width;
+
+
+        const y =
+            point.y *
+            size.height;
 
 
         handCtx.beginPath();
 
+
         handCtx.arc(
-            p.x,
-            p.y,
-            2.5,
+            x,
+            y,
+            3,
             0,
             Math.PI * 2
         );
 
+
         handCtx.fill();
+
     }
+
 }
 
 
-/* =========================================================
-   UPDATE STATUS
-========================================================= */
+/* ==========================================================
+   HAND STATUS
+========================================================== */
 
-function updateStatus(
+function updateHandStatus(
+    side,
+    mode,
+    detected
+) {
+
+    let element;
+
+
+    if (
+        side === "Left"
+    ) {
+
+        element =
+            leftStatus;
+
+    }
+
+    else {
+
+        element =
+            rightStatus;
+
+    }
+
+
+    if (!detected) {
+
+        element.className =
+            "handBox";
+
+
+        element.innerHTML =
+            side === "Left"
+
+            ? "👈 LEFT HAND: Not detected"
+
+            : "👉 RIGHT HAND: Not detected";
+
+
+        return;
+
+    }
+
+
+    element.className =
+        "handBox active";
+
+
+    if (
+        mode === "draw"
+    ) {
+
+        element.innerHTML =
+            side === "Left"
+
+            ? "👈 LEFT: ☝️ DRAW"
+
+            : "👉 RIGHT: ☝️ DRAW";
+
+    }
+
+    else if (
+        mode === "pause"
+    ) {
+
+        element.innerHTML =
+            side === "Left"
+
+            ? "👈 LEFT: ✋ PAUSE"
+
+            : "👉 RIGHT: ✋ PAUSE";
+
+    }
+
+    else {
+
+        element.innerHTML =
+            side === "Left"
+
+            ? "👈 LEFT: ✊ CLEAR"
+
+            : "👉 RIGHT: ✊ CLEAR";
+
+    }
+
+}
+
+
+/* ==========================================================
+   MAIN STATUS
+========================================================== */
+
+function updateMainStatus(
     leftMode,
     rightMode,
     count
@@ -1492,7 +1736,7 @@ function updateStatus(
 
 
     /*
-       Clear
+       FIST
     */
 
     if (
@@ -1508,11 +1752,12 @@ function updateStatus(
             "✊ CLEAR / DELETE";
 
         return;
+
     }
 
 
     /*
-       Drawing
+       DRAWING
     */
 
     if (
@@ -1528,6 +1773,7 @@ function updateStatus(
             "☝️☝️ TWO HANDS DRAWING";
 
         return;
+
     }
 
 
@@ -1544,14 +1790,17 @@ function updateStatus(
             "☝️ DRAW MODE";
 
         return;
+
     }
 
 
     /*
-       Pause
+       PAUSE
     */
 
-    if (count > 0) {
+    if (
+        count > 0
+    ) {
 
         status.classList.add(
             "pause"
@@ -1560,70 +1809,412 @@ function updateStatus(
         status.innerHTML =
             "✋ PAUSE MODE";
 
-    } else {
+    }
+
+    else {
 
         status.classList.add(
-            "pause"
+            "wait"
         );
 
         status.innerHTML =
             "👋 SHOW YOUR HAND";
+
     }
+
 }
 
 
-/* =========================================================
-   UPDATE HAND BOX
-========================================================= */
+/* ==========================================================
+   RESULTS
+========================================================== */
 
-function updateHandBox(
-    side,
-    mode,
-    detected
-) {
+function onResults(results) {
 
-    const element =
-        side === "Left"
-            ? leftStatus
-            : rightStatus;
+    /*
+       Clear hand skeleton
+    */
+
+    const size =
+        getDisplaySize();
 
 
-    if (!detected) {
+    handCtx.clearRect(
+        0,
+        0,
+        size.width,
+        size.height
+    );
 
-        element.className =
-            "hand-box";
 
-        element.innerHTML =
-            side === "Left"
-                ? "👈 LEFT HAND: Not detected"
-                : "👉 RIGHT HAND: Not detected";
+    /*
+       Reset status
+    */
+
+    updateHandStatus(
+        "Left",
+        "pause",
+        false
+    );
+
+
+    updateHandStatus(
+        "Right",
+        "pause",
+        false
+    );
+
+
+    /*
+       No hand
+    */
+
+    if (
+        !results.multiHandLandmarks ||
+        results.multiHandLandmarks.length === 0
+    ) {
+
+        leftPreviousX = null;
+        leftPreviousY = null;
+
+        rightPreviousX = null;
+        rightPreviousY = null;
+
+
+        updateMainStatus(
+            "pause",
+            "pause",
+            0
+        );
+
+
+        info.innerHTML =
+            "👋 No hand detected";
+
 
         return;
+
     }
 
 
-    element.className =
-        "hand-box active";
+    let leftMode =
+        "pause";
+
+    let rightMode =
+        "pause";
 
 
-    const emoji =
-        mode === "draw"
-            ? "☝️ DRAW"
-            : mode === "clear"
-                ? "✊ CLEAR"
-                : "✋ PAUSE";
+    let leftDetected =
+        false;
+
+    let rightDetected =
+        false;
 
 
-    element.innerHTML =
-        side === "Left"
-            ? `👈 LEFT: ${emoji}`
-            : `👉 RIGHT: ${emoji}`;
+    /*
+       PROCESS BOTH HANDS
+    */
+
+    for (
+        let i = 0;
+        i < results.multiHandLandmarks.length;
+        i++
+    ) {
+
+        const landmarks =
+            results.multiHandLandmarks[i];
+
+
+        let side =
+            "Right";
+
+
+        /*
+           MediaPipe handedness
+        */
+
+        if (
+            results.multiHandedness &&
+            results.multiHandedness[i]
+        ) {
+
+            side =
+                results
+                    .multiHandedness[i]
+                    .label;
+
+        }
+
+
+        const mode =
+            processHand(
+                landmarks,
+                side
+            );
+
+
+        drawHandSkeleton(
+            landmarks,
+            side
+        );
+
+
+        if (
+            side === "Left"
+        ) {
+
+            leftMode =
+                mode;
+
+            leftDetected =
+                true;
+
+        }
+
+        else {
+
+            rightMode =
+                mode;
+
+            rightDetected =
+                true;
+
+        }
+
+    }
+
+
+    /*
+       Update UI
+    */
+
+    updateHandStatus(
+        "Left",
+        leftMode,
+        leftDetected
+    );
+
+
+    updateHandStatus(
+        "Right",
+        rightMode,
+        rightDetected
+    );
+
+
+    updateMainStatus(
+        leftMode,
+        rightMode,
+        results.multiHandLandmarks.length
+    );
+
+
+    /*
+       CLEAR
+    */
+
+    if (
+        leftMode === "clear" ||
+        rightMode === "clear"
+    ) {
+
+        const now =
+            Date.now();
+
+
+        if (
+            now - lastClearTime > 1200
+        ) {
+
+            clearDrawing();
+
+            lastClearTime =
+                now;
+
+        }
+
+    }
+
+
+    info.innerHTML =
+        "🖐️ " +
+        results.multiHandLandmarks.length +
+        " hand(s) detected";
+
 }
 
 
-/* =========================================================
+/* ==========================================================
+   MEDIAPIPE HANDS
+========================================================== */
+
+const hands =
+    new Hands({
+
+        locateFile: function(file) {
+
+            return (
+                "https://cdn.jsdelivr.net/npm/@mediapipe/hands/" +
+                file
+            );
+
+        }
+
+    });
+
+
+/*
+   TWO HANDS
+*/
+
+hands.setOptions({
+
+    maxNumHands: 2,
+
+    /*
+       1 = more accurate
+       0 = faster
+
+       We use 1 because you wanted
+       better detection.
+    */
+
+    modelComplexity: 1,
+
+    /*
+       Higher detection confidence
+       reduces false detections.
+    */
+
+    minDetectionConfidence: 0.65,
+
+    /*
+       Tracking confidence.
+    */
+
+    minTrackingConfidence: 0.65
+
+});
+
+
+hands.onResults(
+    onResults
+);
+
+
+/* ==========================================================
+   CAMERA
+========================================================== */
+
+let camera = null;
+
+
+/* ==========================================================
+   START CAMERA
+========================================================== */
+
+async function startAirBloom() {
+
+    try {
+
+        info.innerHTML =
+            "📷 Starting camera...";
+
+
+        /*
+           MediaPipe Camera Utils
+        */
+
+        camera =
+            new Camera(
+                video,
+                {
+
+                    onFrame:
+                        async function() {
+
+                            await hands.send({
+                                image: video
+                            });
+
+                        },
+
+
+                    width: 1280,
+
+                    height: 720
+
+                }
+            );
+
+
+        await camera.start();
+
+
+        /*
+           Camera started
+        */
+
+        loading.style.display =
+            "none";
+
+
+        resizeCanvas();
+
+
+        status.className =
+            "status pause";
+
+
+        status.innerHTML =
+            "👋 SHOW YOUR HAND";
+
+
+        info.innerHTML =
+            "👋 Show one or two hands";
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "AIRBLOOM CAMERA ERROR:",
+            error
+        );
+
+
+        loading.innerHTML = `
+
+            <div style="
+                font-size:40px;
+            ">
+                ❌
+            </div>
+
+            <div>
+                Camera could not start
+            </div>
+
+            <small style="
+                color:#aaa;
+                text-align:center;
+                padding:0 20px;
+            ">
+                Please allow camera permission
+                and reload the page.
+            </small>
+
+        `;
+
+    }
+
+}
+
+
+/* ==========================================================
    CLEAR
-========================================================= */
+========================================================== */
 
 function clearDrawing() {
 
@@ -1639,20 +2230,20 @@ function clearDrawing() {
     );
 
 
-    leftPrevious =
-        null;
+    leftPreviousX = null;
+    leftPreviousY = null;
 
-    rightPrevious =
-        null;
+    rightPreviousX = null;
+    rightPreviousY = null;
 
-    flowerCounter =
-        0;
+    flowerCounter = 0;
+
 }
 
 
-/* =========================================================
+/* ==========================================================
    SAVE
-========================================================= */
+========================================================== */
 
 function saveDrawing() {
 
@@ -1667,10 +2258,19 @@ function saveDrawing() {
 
 
     temp.width =
-        Math.round(size.width);
+        size.width *
+        Math.min(
+            window.devicePixelRatio || 1,
+            2
+        );
+
 
     temp.height =
-        Math.round(size.height);
+        size.height *
+        Math.min(
+            window.devicePixelRatio || 1,
+            2
+        );
 
 
     const ctx =
@@ -1701,17 +2301,13 @@ function saveDrawing() {
         drawCanvas,
         0,
         0,
-        drawCanvas.width,
-        drawCanvas.height,
-        0,
-        0,
         temp.width,
         temp.height
     );
 
 
     /*
-       Download
+       Save
     */
 
     const link =
@@ -1731,754 +2327,33 @@ function saveDrawing() {
 
 
     link.click();
+
 }
 
 
-/* =========================================================
-   PROCESS HAND
-========================================================= */
-
-function processHand(
-    landmarks,
-    side
-) {
-
-    const mode =
-        detectGesture(
-            landmarks
-        );
-
-
-    /*
-       Only index is used
-       for drawing.
-    */
-
-    if (
-        mode !== "draw"
-    ) {
-
-        if (side === "Left") {
-
-            leftPrevious =
-                null;
-
-        } else {
-
-            rightPrevious =
-                null;
-        }
-
-        return mode;
-    }
-
-
-    /*
-       Index fingertip.
-    */
-
-    const index =
-        landmarks[8];
-
-
-    const point =
-        landmarkToScreen(
-            index
-        );
-
-
-    /*
-       Prevent drawing too many
-       flowers on every frame.
-    */
-
-    const now =
-        performance.now();
-
-
-    if (side === "Left") {
-
-        if (
-            now - lastDrawTimeLeft
-            < 45
-        ) {
-
-            return mode;
-        }
-
-
-        if (
-            leftPrevious !== null
-        ) {
-
-            drawConnection(
-                leftPrevious.x,
-                leftPrevious.y,
-                point.x,
-                point.y,
-                "Left"
-            );
-        }
-
-
-        drawFlower(
-            point.x,
-            point.y,
-            "Left"
-        );
-
-
-        leftPrevious =
-            point;
-
-
-        lastDrawTimeLeft =
-            now;
-
-    }
-
-
-    else {
-
-        if (
-            now - lastDrawTimeRight
-            < 45
-        ) {
-
-            return mode;
-        }
-
-
-        if (
-            rightPrevious !== null
-        ) {
-
-            drawConnection(
-                rightPrevious.x,
-                rightPrevious.y,
-                point.x,
-                point.y,
-                "Right"
-            );
-        }
-
-
-        drawFlower(
-            point.x,
-            point.y,
-            "Right"
-        );
-
-
-        rightPrevious =
-            point;
-
-
-        lastDrawTimeRight =
-            now;
-    }
-
-
-    return mode;
-}
-
-
-/* =========================================================
-   PROCESS RESULTS
-========================================================= */
-
-function processResults(
-    result
-) {
-
-    const size =
-        getDisplaySize();
-
-
-    /*
-       Clear skeleton.
-    */
-
-    handCtx.clearRect(
-        0,
-        0,
-        size.width,
-        size.height
-    );
-
-
-    /*
-       Reset UI.
-    */
-
-    updateHandBox(
-        "Left",
-        "pause",
-        false
-    );
-
-    updateHandBox(
-        "Right",
-        "pause",
-        false
-    );
-
-
-    const landmarksList =
-        result.landmarks || [];
-
-
-    /*
-       No hands.
-    */
-
-    if (
-        landmarksList.length === 0
-    ) {
-
-        leftPrevious =
-            null;
-
-        rightPrevious =
-            null;
-
-
-        updateStatus(
-            "pause",
-            "pause",
-            0
-        );
-
-
-        info.innerHTML =
-            "👋 No hand detected";
-
-        return;
-    }
-
-
-    let leftMode =
-        "pause";
-
-    let rightMode =
-        "pause";
-
-
-    let leftDetected =
-        false;
-
-    let rightDetected =
-        false;
-
-
-    /*
-       Process every detected hand.
-    */
-
-    for (
-        let i = 0;
-        i < landmarksList.length;
-        i++
-    ) {
-
-        const landmarks =
-            landmarksList[i];
-
+/* ==========================================================
+   START
+========================================================== */
+
+window.addEventListener(
+    "load",
+    function() {
 
         /*
-           MediaPipe handedness.
+           Give browser time to
+           load MediaPipe files.
         */
-
-        let side =
-            "Right";
-
-
-        if (
-            result.handedness &&
-            result.handedness[i] &&
-            result.handedness[i][0]
-        ) {
-
-            side =
-                result.handedness[i][0].categoryName;
-        }
-
-
-        /*
-           Because the camera is mirrored,
-           MediaPipe's handedness can appear
-           reversed visually.
-
-           We compensate here.
-        */
-
-        if (
-            side === "Left"
-        ) {
-
-            side = "Right";
-
-        } else {
-
-            side = "Left";
-        }
-
-
-        const mode =
-            processHand(
-                landmarks,
-                side
-            );
-
-
-        drawHandSkeleton(
-            landmarks,
-            side
-        );
-
-
-        if (
-            side === "Left"
-        ) {
-
-            leftMode =
-                mode;
-
-            leftDetected =
-                true;
-
-        } else {
-
-            rightMode =
-                mode;
-
-            rightDetected =
-                true;
-        }
-    }
-
-
-    /*
-       UI
-    */
-
-    updateHandBox(
-        "Left",
-        leftMode,
-        leftDetected
-    );
-
-
-    updateHandBox(
-        "Right",
-        rightMode,
-        rightDetected
-    );
-
-
-    updateStatus(
-        leftMode,
-        rightMode,
-        landmarksList.length
-    );
-
-
-    /*
-       CLEAR gesture.
-
-       Cooldown prevents continuous
-       clearing every frame.
-    */
-
-    if (
-        leftMode === "clear" ||
-        rightMode === "clear"
-    ) {
-
-        const now =
-            Date.now();
-
-
-        if (
-            now - lastClearTime
-            > 1200
-        ) {
-
-            clearDrawing();
-
-            lastClearTime =
-                now;
-        }
-    }
-
-
-    info.innerHTML =
-        `🖐️ ${landmarksList.length} hand(s) detected`;
-}
-
-
-/* =========================================================
-   CAMERA LOOP
-========================================================= */
-
-async function predict() {
-
-    if (!running) {
-        return;
-    }
-
-
-    /*
-       Only process a new video frame.
-    */
-
-    if (
-        video.readyState >= 2 &&
-        video.currentTime !== lastVideoTime
-    ) {
-
-        lastVideoTime =
-            video.currentTime;
-
-
-        try {
-
-            const result =
-                handLandmarker.detectForVideo(
-                    video,
-                    performance.now()
-                );
-
-
-            processResults(
-                result
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Detection error:",
-                error
-            );
-        }
-    }
-
-
-    requestAnimationFrame(
-        predict
-    );
-}
-
-
-/* =========================================================
-   START CAMERA
-========================================================= */
-
-async function startCamera() {
-
-    try {
-
-        loadingText.innerHTML =
-            "📷 Requesting camera permission...";
-
-
-        /*
-           Ask for camera.
-
-           Environment = rear camera
-           User = front camera.
-
-           We want front camera.
-        */
-
-        cameraStream =
-            await navigator.mediaDevices.getUserMedia({
-
-                video: {
-
-                    facingMode:
-                        "user",
-
-                    width: {
-                        ideal: 1280
-                    },
-
-                    height: {
-                        ideal: 720
-                    },
-
-                    frameRate: {
-                        ideal: 30,
-                        max: 60
-                    }
-                },
-
-                audio: false
-            });
-
-
-        video.srcObject =
-            cameraStream;
-
-
-        await video.play();
-
-
-        resizeCanvas();
-
-
-        info.innerHTML =
-            "📷 Camera ready — show your hands";
-
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Camera error:",
-            error
-        );
-
-
-        loadingText.innerHTML = `
-            ❌ Camera could not start.<br><br>
-            Please allow camera access and reload the page.
-        `;
-
-
-        status.className =
-            "status clear";
-
-
-        status.innerHTML =
-            "❌ CAMERA ERROR";
-
-
-        info.innerHTML =
-            error.message;
-    }
-}
-
-
-/* =========================================================
-   LOAD MEDIAPIPE
-========================================================= */
-
-async function initializeAirBloom() {
-
-    try {
-
-        loadingText.innerHTML =
-            "🌸 Loading hand detector...";
-
-
-        /*
-           Wait for MediaPipe Tasks Vision.
-        */
-
-        if (
-            !window.HandLandmarker ||
-            !window.FilesetResolver
-        ) {
-
-            await new Promise(
-                resolve => {
-
-                    window.addEventListener(
-                        "mediapipe-ready",
-                        resolve,
-                        { once: true }
-                    );
-
-                }
-            );
-        }
-
-
-        /*
-           WASM files.
-        */
-
-        const vision =
-            await window.FilesetResolver.forVisionTasks(
-
-                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
-
-            );
-
-
-        loadingText.innerHTML =
-            "🧠 Loading AI hand model...";
-
-
-        /*
-           Hand Landmarker.
-
-           This model supports up to 2 hands.
-        */
-
-        handLandmarker =
-            await window.HandLandmarker.createFromOptions(
-
-                vision,
-
-                {
-
-                    baseOptions: {
-
-                        modelAssetPath:
-                            "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-
-                        delegate:
-                            "GPU"
-                    },
-
-
-                    runningMode:
-                        "VIDEO",
-
-
-                    numHands:
-                        2,
-
-
-                    /*
-                       Lower detection threshold
-                       helps when the hand moves quickly.
-                    */
-
-                    minHandDetectionConfidence:
-                        0.45,
-
-
-                    /*
-                       Tracking confidence.
-                    */
-
-                    minHandPresenceConfidence:
-                        0.45,
-
-
-                    minTrackingConfidence:
-                        0.45
-                }
-            );
-
-
-        loadingText.innerHTML =
-            "📷 Starting camera...";
-
-
-        await startCamera();
-
-
-        /*
-           Everything ready.
-        */
-
-        loading.style.display =
-            "none";
-
-
-        status.className =
-            "status ready";
-
-
-        status.innerHTML =
-            "🌸 AIRBLOOM IS READY";
-
-
-        running =
-            true;
-
-
-        requestAnimationFrame(
-            predict
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "AirBloom initialization error:",
-            error
-        );
-
-
-        loadingText.innerHTML = `
-            ❌ AirBloom could not start.<br><br>
-            Check your internet connection,
-            camera permission,
-            and reload the page.
-        `;
-
-
-        status.className =
-            "status clear";
-
-
-        status.innerHTML =
-            "❌ STARTUP ERROR";
-
-
-        info.innerHTML =
-            error.message;
-    }
-}
-
-
-/* =========================================================
-   BUTTONS
-========================================================= */
-
-clearBtn.addEventListener(
-    "click",
-    () => {
-
-        clearDrawing();
-
-        status.className =
-            "status ready";
-
-        status.innerHTML =
-            "🗑️ CANVAS CLEARED";
 
         setTimeout(
-            () => {
-
-                if (running) {
-
-                    status.className =
-                        "status ready";
-
-                    status.innerHTML =
-                        "🌸 AIRBLOOM IS READY";
-                }
-
-            },
-            900
+            startAirBloom,
+            500
         );
+
     }
 );
-
-
-saveBtn.addEventListener(
-    "click",
-    saveDrawing
-);
-
-
-/* =========================================================
-   START
-========================================================= */
-
-initializeAirBloom();
 
 </script>
 
 </body>
+
 </html>
