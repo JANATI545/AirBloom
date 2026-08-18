@@ -17,20 +17,14 @@
 
     <!-- =====================================================
          MEDIAPIPE HANDS CLASSIC
-         IMPORTANT : PAS DE tasks-vision
+         PAS DE tasks-vision
     ====================================================== -->
 
-    <script
-        src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
-    <script
-        src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
-    <script
-        src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
 
     <style>
@@ -136,7 +130,7 @@
 
 
         /* =====================================================
-           CAMERA STAGE
+           CAMERA
         ====================================================== */
 
         .stage {
@@ -287,28 +281,24 @@
         .status.draw {
 
             color: #ff72c6;
-
         }
 
 
         .status.pause {
 
             color: #ffd166;
-
         }
 
 
         .status.clear {
 
             color: #ff6b6b;
-
         }
 
 
         .status.wait {
 
             color: #9da4c5;
-
         }
 
 
@@ -403,7 +393,6 @@
         button:active {
 
             transform: scale(0.96);
-
         }
 
 
@@ -603,7 +592,7 @@
 
 
     <!-- =====================================================
-         CAMERA
+         CAMERA STAGE
     ====================================================== -->
 
     <div class="stage">
@@ -632,14 +621,9 @@
         </video>
 
 
-        <canvas
-            id="drawCanvas">
-        </canvas>
+        <canvas id="drawCanvas"></canvas>
 
-
-        <canvas
-            id="handCanvas">
-        </canvas>
+        <canvas id="handCanvas"></canvas>
 
 
     </div>
@@ -654,6 +638,7 @@
         class="status wait">
 
         ⏳ Starting...
+
     </div>
 
 
@@ -772,7 +757,6 @@
 </div>
 
 
-
 <script>
 
 /* ==========================================================
@@ -825,8 +809,25 @@ let flowerCounter = 0;
 let lastClearTime = 0;
 
 
+/*
+   IMPORTANT:
+
+   Do not create a flower on every
+   camera frame.
+
+   This makes the application
+   much smoother on phones.
+*/
+
+let lastFlowerTimeLeft = 0;
+
+let lastFlowerTimeRight = 0;
+
+const FLOWER_INTERVAL = 35;
+
+
 /* ==========================================================
-   DRAWING COLORS
+   COLORS
 ========================================================== */
 
 const colors = [
@@ -844,7 +845,7 @@ const colors = [
 
 
 /* ==========================================================
-   CANVAS
+   CANVAS RESIZE
 ========================================================== */
 
 function resizeCanvas() {
@@ -857,14 +858,11 @@ function resizeCanvas() {
         rect.width <= 0 ||
         rect.height <= 0
     ) {
+
         return;
+
     }
 
-
-    /*
-       Use devicePixelRatio for
-       sharper drawing on phones.
-    */
 
     const ratio =
         Math.min(
@@ -874,17 +872,25 @@ function resizeCanvas() {
 
 
     drawCanvas.width =
-        rect.width * ratio;
+        Math.round(
+            rect.width * ratio
+        );
 
     drawCanvas.height =
-        rect.height * ratio;
+        Math.round(
+            rect.height * ratio
+        );
 
 
     handCanvas.width =
-        rect.width * ratio;
+        Math.round(
+            rect.width * ratio
+        );
 
     handCanvas.height =
-        rect.height * ratio;
+        Math.round(
+            rect.height * ratio
+        );
 
 
     drawCtx.setTransform(
@@ -916,7 +922,7 @@ window.addEventListener(
 
 
 /* ==========================================================
-   GET DISPLAY SIZE
+   DISPLAY SIZE
 ========================================================== */
 
 function getDisplaySize() {
@@ -948,6 +954,7 @@ function distance(a, b) {
     const dy =
         a.y - b.y;
 
+
     return Math.sqrt(
         dx * dx + dy * dy
     );
@@ -958,14 +965,6 @@ function distance(a, b) {
 /* ==========================================================
    FINGER DETECTION
 ========================================================== */
-
-/*
-   More stable than only checking Y.
-
-   We compare the distance from
-   fingertip to wrist against
-   the PIP joint.
-*/
 
 function isFingerExtended(
     landmarks,
@@ -989,6 +988,7 @@ function isFingerExtended(
             wrist
         );
 
+
     const pipDistance =
         distance(
             pip,
@@ -1005,7 +1005,7 @@ function isFingerExtended(
 
 
 /* ==========================================================
-   GESTURE
+   GESTURE DETECTION
 ========================================================== */
 
 function detectGesture(landmarks) {
@@ -1017,6 +1017,7 @@ function detectGesture(landmarks) {
             6
         );
 
+
     const middle =
         isFingerExtended(
             landmarks,
@@ -1024,12 +1025,14 @@ function detectGesture(landmarks) {
             10
         );
 
+
     const ring =
         isFingerExtended(
             landmarks,
             16,
             14
         );
+
 
     const pinky =
         isFingerExtended(
@@ -1087,11 +1090,6 @@ function detectGesture(landmarks) {
     }
 
 
-    /*
-       Ambiguous gesture
-       = pause for safety
-    */
-
     return "pause";
 
 }
@@ -1114,7 +1112,9 @@ function drawFlower(
 
         color = "#ff72c6";
 
-    } else {
+    }
+
+    else {
 
         color = "#67d9ff";
 
@@ -1151,15 +1151,17 @@ function drawFlower(
     );
 
 
-    drawCtx.shadowBlur =
-        14;
+    /*
+       Glow
+    */
 
-    drawCtx.shadowColor =
-        color;
+    drawCtx.shadowBlur = 10;
+
+    drawCtx.shadowColor = color;
 
 
     /*
-       PETALS
+       Petals
     */
 
     for (
@@ -1211,7 +1213,7 @@ function drawFlower(
 
 
     /*
-       CENTER
+       Center
     */
 
     drawCtx.beginPath();
@@ -1221,8 +1223,7 @@ function drawFlower(
         "#fff3a3";
 
 
-    drawCtx.globalAlpha =
-        1;
+    drawCtx.globalAlpha = 1;
 
 
     drawCtx.arc(
@@ -1238,7 +1239,7 @@ function drawFlower(
 
 
     /*
-       SPARKLE
+       Sparkle
     */
 
     if (
@@ -1248,8 +1249,10 @@ function drawFlower(
         drawCtx.fillStyle =
             "white";
 
+
         drawCtx.font =
             "15px Arial";
+
 
         drawCtx.fillText(
             "✦",
@@ -1298,8 +1301,7 @@ function drawConnection(
         "rgba(255,255,255,0.18)";
 
 
-    drawCtx.lineWidth =
-        2;
+    drawCtx.lineWidth = 2;
 
 
     drawCtx.stroke();
@@ -1325,10 +1327,6 @@ function processHand(
         );
 
 
-    /*
-       INDEX TIP
-    */
-
     const index =
         landmarks[8];
 
@@ -1338,7 +1336,7 @@ function processHand(
 
 
     /*
-       Mirror camera
+       Mirror X
     */
 
     const x =
@@ -1351,9 +1349,13 @@ function processHand(
         size.height;
 
 
-    /*
-       LEFT
-    */
+    const now =
+        Date.now();
+
+
+    /* ======================================================
+       LEFT HAND
+    ====================================================== */
 
     if (
         side === "Left"
@@ -1363,26 +1365,44 @@ function processHand(
             mode === "draw"
         ) {
 
+            /*
+               Draw only every
+               FLOWER_INTERVAL ms.
+            */
+
             if (
-                leftPreviousX !== null &&
-                leftPreviousY !== null
+                now -
+                lastFlowerTimeLeft
+                >=
+                FLOWER_INTERVAL
             ) {
 
-                drawConnection(
-                    leftPreviousX,
-                    leftPreviousY,
+                if (
+                    leftPreviousX !== null &&
+                    leftPreviousY !== null
+                ) {
+
+                    drawConnection(
+                        leftPreviousX,
+                        leftPreviousY,
+                        x,
+                        y
+                    );
+
+                }
+
+
+                drawFlower(
                     x,
-                    y
+                    y,
+                    "Left"
                 );
 
+
+                lastFlowerTimeLeft =
+                    now;
+
             }
-
-
-            drawFlower(
-                x,
-                y,
-                "Left"
-            );
 
 
             leftPreviousX =
@@ -1406,9 +1426,9 @@ function processHand(
     }
 
 
-    /*
-       RIGHT
-    */
+    /* ======================================================
+       RIGHT HAND
+    ====================================================== */
 
     else {
 
@@ -1417,25 +1437,38 @@ function processHand(
         ) {
 
             if (
-                rightPreviousX !== null &&
-                rightPreviousY !== null
+                now -
+                lastFlowerTimeRight
+                >=
+                FLOWER_INTERVAL
             ) {
 
-                drawConnection(
-                    rightPreviousX,
-                    rightPreviousY,
+                if (
+                    rightPreviousX !== null &&
+                    rightPreviousY !== null
+                ) {
+
+                    drawConnection(
+                        rightPreviousX,
+                        rightPreviousY,
+                        x,
+                        y
+                    );
+
+                }
+
+
+                drawFlower(
                     x,
-                    y
+                    y,
+                    "Right"
                 );
 
+
+                lastFlowerTimeRight =
+                    now;
+
             }
-
-
-            drawFlower(
-                x,
-                y,
-                "Right"
-            );
 
 
             rightPreviousX =
@@ -1532,12 +1565,11 @@ function drawHandSkeleton(
     }
 
 
-    handCtx.lineWidth =
-        2;
+    handCtx.lineWidth = 2;
 
 
     /*
-       LINES
+       Lines
     */
 
     for (
@@ -1556,6 +1588,7 @@ function drawHandSkeleton(
             (1 - a.x) *
             size.width;
 
+
         const y1 =
             a.y *
             size.height;
@@ -1564,6 +1597,7 @@ function drawHandSkeleton(
         const x2 =
             (1 - b.x) *
             size.width;
+
 
         const y2 =
             b.y *
@@ -1591,7 +1625,7 @@ function drawHandSkeleton(
 
 
     /*
-       POINTS
+       Points
     */
 
     for (
@@ -1736,7 +1770,7 @@ function updateMainStatus(
 
 
     /*
-       FIST
+       CLEAR
     */
 
     if (
@@ -1748,8 +1782,10 @@ function updateMainStatus(
             "clear"
         );
 
+
         status.innerHTML =
             "✊ CLEAR / DELETE";
+
 
         return;
 
@@ -1757,7 +1793,7 @@ function updateMainStatus(
 
 
     /*
-       DRAWING
+       TWO HANDS DRAWING
     */
 
     if (
@@ -1769,13 +1805,19 @@ function updateMainStatus(
             "draw"
         );
 
+
         status.innerHTML =
             "☝️☝️ TWO HANDS DRAWING";
+
 
         return;
 
     }
 
+
+    /*
+       ONE HAND DRAWING
+    */
 
     if (
         leftMode === "draw" ||
@@ -1786,8 +1828,10 @@ function updateMainStatus(
             "draw"
         );
 
+
         status.innerHTML =
             "☝️ DRAW MODE";
+
 
         return;
 
@@ -1806,6 +1850,7 @@ function updateMainStatus(
             "pause"
         );
 
+
         status.innerHTML =
             "✋ PAUSE MODE";
 
@@ -1817,6 +1862,7 @@ function updateMainStatus(
             "wait"
         );
 
+
         status.innerHTML =
             "👋 SHOW YOUR HAND";
 
@@ -1826,18 +1872,18 @@ function updateMainStatus(
 
 
 /* ==========================================================
-   RESULTS
+   MEDIAPIPE RESULTS
 ========================================================== */
 
 function onResults(results) {
 
-    /*
-       Clear hand skeleton
-    */
-
     const size =
         getDisplaySize();
 
+
+    /*
+       Clear hand skeleton
+    */
 
     handCtx.clearRect(
         0,
@@ -1900,6 +1946,7 @@ function onResults(results) {
     let leftMode =
         "pause";
 
+
     let rightMode =
         "pause";
 
@@ -1907,12 +1954,13 @@ function onResults(results) {
     let leftDetected =
         false;
 
+
     let rightDetected =
         false;
 
 
     /*
-       PROCESS BOTH HANDS
+       Process hands
     */
 
     for (
@@ -1953,11 +2001,19 @@ function onResults(results) {
             );
 
 
+        /*
+           Skeleton
+        */
+
         drawHandSkeleton(
             landmarks,
             side
         );
 
+
+        /*
+           Status
+        */
 
         if (
             side === "Left"
@@ -2010,7 +2066,7 @@ function onResults(results) {
 
 
     /*
-       CLEAR
+       CLEAR WITH FIST
     */
 
     if (
@@ -2027,6 +2083,7 @@ function onResults(results) {
         ) {
 
             clearDrawing();
+
 
             lastClearTime =
                 now;
@@ -2064,35 +2121,20 @@ const hands =
 
 
 /*
-   TWO HANDS
+   OPTIMIZED FOR MOBILE
+
+   modelComplexity 0 = faster
 */
 
 hands.setOptions({
 
     maxNumHands: 2,
 
-    /*
-       1 = more accurate
-       0 = faster
+    modelComplexity: 0,
 
-       We use 1 because you wanted
-       better detection.
-    */
+    minDetectionConfidence: 0.55,
 
-    modelComplexity: 1,
-
-    /*
-       Higher detection confidence
-       reduces false detections.
-    */
-
-    minDetectionConfidence: 0.65,
-
-    /*
-       Tracking confidence.
-    */
-
-    minTrackingConfidence: 0.65
+    minTrackingConfidence: 0.55
 
 });
 
@@ -2122,7 +2164,8 @@ async function startAirBloom() {
 
 
         /*
-           MediaPipe Camera Utils
+           Lower resolution
+           = much faster on phones
         */
 
         camera =
@@ -2140,9 +2183,9 @@ async function startAirBloom() {
                         },
 
 
-                    width: 1280,
+                    width: 640,
 
-                    height: 720
+                    height: 480
 
                 }
             );
@@ -2172,7 +2215,6 @@ async function startAirBloom() {
 
         info.innerHTML =
             "👋 Show one or two hands";
-
 
     }
 
@@ -2236,19 +2278,27 @@ function clearDrawing() {
     rightPreviousX = null;
     rightPreviousY = null;
 
+
     flowerCounter = 0;
 
 }
 
 
 /* ==========================================================
-   SAVE
+   SAVE DRAWING
 ========================================================== */
 
 function saveDrawing() {
 
     const size =
         getDisplaySize();
+
+
+    const ratio =
+        Math.min(
+            window.devicePixelRatio || 1,
+            2
+        );
 
 
     const temp =
@@ -2258,18 +2308,14 @@ function saveDrawing() {
 
 
     temp.width =
-        size.width *
-        Math.min(
-            window.devicePixelRatio || 1,
-            2
+        Math.round(
+            size.width * ratio
         );
 
 
     temp.height =
-        size.height *
-        Math.min(
-            window.devicePixelRatio || 1,
-            2
+        Math.round(
+            size.height * ratio
         );
 
 
@@ -2307,7 +2353,7 @@ function saveDrawing() {
 
 
     /*
-       Save
+       Download
     */
 
     const link =
@@ -2332,7 +2378,7 @@ function saveDrawing() {
 
 
 /* ==========================================================
-   START
+   START AIRBLOOM
 ========================================================== */
 
 window.addEventListener(
@@ -2340,8 +2386,8 @@ window.addEventListener(
     function() {
 
         /*
-           Give browser time to
-           load MediaPipe files.
+           Small delay to allow
+           MediaPipe scripts to load.
         */
 
         setTimeout(
